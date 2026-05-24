@@ -1,22 +1,23 @@
 #include "stm32g431xx.h"
-
-void SystemInit(void) {
-	RCC->CR |= 1<<24;
-	RCC->AHB2ENR |= 1<<1;
-	GPIOB->MODER = 0x00010000;
-}
-
-void delay(void) {
-	long int i;
-	for (i=0; i < 100000; i++);
-}
+#include "random.h"
+#include "LED_blink.h"
 
 int main(void) {
-	SystemInit();
-	while (1) {
-		GPIOB->ODR |= 1<<8;
-		delay();
-		GPIOB->ODR &= 0;
-		delay();
-	}
+    // Hier würde deine Hardware-Initialisierung (init) stehen
+
+    uint32_t meineZufallszahl1 = 0;
+    uint32_t meineZufallszahl2 = 0;
+    uint32_t meineZufallszahl3 = 0;
+    uint32_t meineZufallszahl4 = 0;
+
+    while (1) {
+        // Du rufst einfach nur noch den Namen auf. Herrlich übersichtlich!
+        meineZufallszahl1 = generateRandomNumber();
+        meineZufallszahl2 = generateRandomNumber();
+        meineZufallszahl3 = generateRandomNumber();
+        meineZufallszahl4 = generateRandomNumber();
+        //startBlinken();
+
+        // Jetzt kannst du mit der Zahl dein Memory-Level generieren
+    }
 }
