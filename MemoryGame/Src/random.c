@@ -20,7 +20,7 @@ void systickDelayMs(int n)
   SysTick->CTRL =0;             // Disable Systick
 }
 
-void init(void)
+void initRandomNumber(void)
 {
   // Port Initializiation
   RCC->CR |= 1<<24;             // Bit24: Enable RCC clock
@@ -49,7 +49,7 @@ uint32_t generateRandomNumber(void)
   unsigned int LSBit = 0;
   unsigned int i = 0;
 
-  init();
+  initRandomNumber();
   systickDelayMs(10);                   // Wait 10 ms to stabilize ADC
 
 
