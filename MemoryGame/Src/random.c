@@ -23,7 +23,7 @@ void systickDelayMs(int n)
 void initRandomNumber(void)
 {
   // Port Initializiation
-  RCC->CR |= 1<<24;             // Bit24: Enable RCC clock
+  RCC->CR |= 1<<24;             //	it Bit24: Enable RCC clock
   RCC->AHB2ENR |= 1<<1; 	// Bit1: Enable clocks for GPIOB
   GPIOB->MODER = 0x00010000; 	// Bit8: Set PB8 (LED) as digital output
 
