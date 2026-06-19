@@ -18,8 +18,9 @@ int main(void) {
 //        meineZufallszahl2 = generateRandomNumber();
 //        meineZufallszahl3 = generateRandomNumber();
 //        meineZufallszahl4 = generateRandomNumber();
-        startLEDBlinkInterrupt();
-        //startBlinken();
+        //startLEDBlinkInterrupt();
+         //startBlinken();
+         startLEDBlinkInterrupt();
 
         // Jetzt kannst du mit der Zahl dein Memory-Level generieren
     }
