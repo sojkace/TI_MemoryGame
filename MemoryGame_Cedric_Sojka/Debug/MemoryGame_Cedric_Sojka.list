@@ -1,0 +1,882 @@
+
+MemoryGame_Cedric_Sojka.elf:     file format elf32-littlearm
+
+Sections:
+Idx Name          Size      VMA       LMA       File off  Algn
+  0 .isr_vector   000001d8  08000000  08000000  00001000  2**0
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  1 .text         000004d0  080001d8  080001d8  000011d8  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, CODE
+  2 .rodata       00000000  080006a8  080006a8  00002004  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  3 .ARM.extab    00000000  080006a8  080006a8  00002004  2**0
+                  CONTENTS, READONLY
+  4 .ARM          00000000  080006a8  080006a8  00002004  2**0
+                  CONTENTS, READONLY
+  5 .preinit_array 00000000  080006a8  080006a8  00002004  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  6 .init_array   00000004  080006a8  080006a8  000016a8  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  7 .fini_array   00000004  080006ac  080006ac  000016ac  2**2
+                  CONTENTS, ALLOC, LOAD, READONLY, DATA
+  8 .data         00000004  20000000  080006b0  00002000  2**0
+                  CONTENTS, ALLOC, LOAD, DATA
+  9 .ccmsram      00000000  10000000  10000000  00002004  2**0
+                  CONTENTS
+ 10 .bss          00000024  20000004  20000004  00002004  2**2
+                  ALLOC
+ 11 ._user_heap_stack 00000600  20000028  20000028  00002004  2**0
+                  ALLOC
+ 12 .ARM.attributes 00000030  00000000  00000000  00002004  2**0
+                  CONTENTS, READONLY
+ 13 .debug_info   000011c9  00000000  00000000  00002034  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 14 .debug_abbrev 000004d9  00000000  00000000  000031fd  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 15 .debug_aranges 000000d8  00000000  00000000  000036d8  2**3
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 16 .debug_rnglists 0000008b  00000000  00000000  000037b0  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 17 .debug_macro  0001389e  00000000  00000000  0000383b  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 18 .debug_line   00001581  00000000  00000000  000170d9  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 19 .debug_str    0006f8dc  00000000  00000000  0001865a  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 20 .comment      00000043  00000000  00000000  00087f36  2**0
+                  CONTENTS, READONLY
+ 21 .debug_frame  000001ac  00000000  00000000  00087f7c  2**2
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+ 22 .debug_line_str 00000072  00000000  00000000  00088128  2**0
+                  CONTENTS, READONLY, DEBUGGING, OCTETS
+
+Disassembly of section .text:
+
+080001d8 <__do_global_dtors_aux>:
+ 80001d8:	b510      	push	{r4, lr}
+ 80001da:	4c05      	ldr	r4, [pc, #20]	@ (80001f0 <__do_global_dtors_aux+0x18>)
+ 80001dc:	7823      	ldrb	r3, [r4, #0]
+ 80001de:	b933      	cbnz	r3, 80001ee <__do_global_dtors_aux+0x16>
+ 80001e0:	4b04      	ldr	r3, [pc, #16]	@ (80001f4 <__do_global_dtors_aux+0x1c>)
+ 80001e2:	b113      	cbz	r3, 80001ea <__do_global_dtors_aux+0x12>
+ 80001e4:	4804      	ldr	r0, [pc, #16]	@ (80001f8 <__do_global_dtors_aux+0x20>)
+ 80001e6:	f3af 8000 	nop.w
+ 80001ea:	2301      	movs	r3, #1
+ 80001ec:	7023      	strb	r3, [r4, #0]
+ 80001ee:	bd10      	pop	{r4, pc}
+ 80001f0:	20000004 	.word	0x20000004
+ 80001f4:	00000000 	.word	0x00000000
+ 80001f8:	08000690 	.word	0x08000690
+
+080001fc <frame_dummy>:
+ 80001fc:	b508      	push	{r3, lr}
+ 80001fe:	4b03      	ldr	r3, [pc, #12]	@ (800020c <frame_dummy+0x10>)
+ 8000200:	b11b      	cbz	r3, 800020a <frame_dummy+0xe>
+ 8000202:	4903      	ldr	r1, [pc, #12]	@ (8000210 <frame_dummy+0x14>)
+ 8000204:	4803      	ldr	r0, [pc, #12]	@ (8000214 <frame_dummy+0x18>)
+ 8000206:	f3af 8000 	nop.w
+ 800020a:	bd08      	pop	{r3, pc}
+ 800020c:	00000000 	.word	0x00000000
+ 8000210:	20000008 	.word	0x20000008
+ 8000214:	08000690 	.word	0x08000690
+
+08000218 <initRandomNumber>:
+#include "stm32g431xx.h"
+#include "ADC_random_numbers.h"
+#include "tools.h"
+
+void initRandomNumber(void)
+{
+ 8000218:	b580      	push	{r7, lr}
+ 800021a:	af00      	add	r7, sp, #0
+  // Port Initializiation
+  RCC->CR |= 1<<24;             //	it Bit24: Enable RCC clock
+ 800021c:	4b25      	ldr	r3, [pc, #148]	@ (80002b4 <initRandomNumber+0x9c>)
+ 800021e:	681b      	ldr	r3, [r3, #0]
+ 8000220:	4a24      	ldr	r2, [pc, #144]	@ (80002b4 <initRandomNumber+0x9c>)
+ 8000222:	f043 7380 	orr.w	r3, r3, #16777216	@ 0x1000000
+ 8000226:	6013      	str	r3, [r2, #0]
+  RCC->AHB2ENR |= 1<<1; 	// Bit1: Enable clocks for GPIOB
+ 8000228:	4b22      	ldr	r3, [pc, #136]	@ (80002b4 <initRandomNumber+0x9c>)
+ 800022a:	6cdb      	ldr	r3, [r3, #76]	@ 0x4c
+ 800022c:	4a21      	ldr	r2, [pc, #132]	@ (80002b4 <initRandomNumber+0x9c>)
+ 800022e:	f043 0302 	orr.w	r3, r3, #2
+ 8000232:	64d3      	str	r3, [r2, #76]	@ 0x4c
+  GPIOB->MODER = 0x00010000; 	// Bit8: Set PB8 (LED) as digital output
+ 8000234:	4b20      	ldr	r3, [pc, #128]	@ (80002b8 <initRandomNumber+0xa0>)
+ 8000236:	f44f 3280 	mov.w	r2, #65536	@ 0x10000
+ 800023a:	601a      	str	r2, [r3, #0]
+
+  // ADC Initializiation: Input Port-Pin
+  RCC->AHB2ENR |= 1<<0; 	// Bit1: Enable clocks for GPIOA
+ 800023c:	4b1d      	ldr	r3, [pc, #116]	@ (80002b4 <initRandomNumber+0x9c>)
+ 800023e:	6cdb      	ldr	r3, [r3, #76]	@ 0x4c
+ 8000240:	4a1c      	ldr	r2, [pc, #112]	@ (80002b4 <initRandomNumber+0x9c>)
+ 8000242:	f043 0301 	orr.w	r3, r3, #1
+ 8000246:	64d3      	str	r3, [r2, #76]	@ 0x4c
+  GPIOA->MODER |= 0xC0; 	// Bit8: Set PA3 to analog mode
+ 8000248:	f04f 4390 	mov.w	r3, #1207959552	@ 0x48000000
+ 800024c:	681b      	ldr	r3, [r3, #0]
+ 800024e:	f04f 4290 	mov.w	r2, #1207959552	@ 0x48000000
+ 8000252:	f043 03c0 	orr.w	r3, r3, #192	@ 0xc0
+ 8000256:	6013      	str	r3, [r2, #0]
+
+  // ADC Initializiation: Conversion
+  RCC->AHB2ENR |= 1<<13; 	// Bit13: Enable clocks for ADC1 & ADC2
+ 8000258:	4b16      	ldr	r3, [pc, #88]	@ (80002b4 <initRandomNumber+0x9c>)
+ 800025a:	6cdb      	ldr	r3, [r3, #76]	@ 0x4c
+ 800025c:	4a15      	ldr	r2, [pc, #84]	@ (80002b4 <initRandomNumber+0x9c>)
+ 800025e:	f443 5300 	orr.w	r3, r3, #8192	@ 0x2000
+ 8000262:	64d3      	str	r3, [r2, #76]	@ 0x4c
+  ADC12_COMMON->CCR |= 1<<17;   // Bit17: hclk/2 clock mode for ADC1 & ADC2
+ 8000264:	4b15      	ldr	r3, [pc, #84]	@ (80002bc <initRandomNumber+0xa4>)
+ 8000266:	689b      	ldr	r3, [r3, #8]
+ 8000268:	4a14      	ldr	r2, [pc, #80]	@ (80002bc <initRandomNumber+0xa4>)
+ 800026a:	f443 3300 	orr.w	r3, r3, #131072	@ 0x20000
+ 800026e:	6093      	str	r3, [r2, #8]
+
+  ADC1->CR &= ~(1<<29);         // Disable ADC1 deep power down mode
+ 8000270:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 8000274:	689b      	ldr	r3, [r3, #8]
+ 8000276:	f04f 42a0 	mov.w	r2, #1342177280	@ 0x50000000
+ 800027a:	f023 5300 	bic.w	r3, r3, #536870912	@ 0x20000000
+ 800027e:	6093      	str	r3, [r2, #8]
+  ADC1->SQR1 = 0x0100;          // First conversion ADC1_IN4 == GPIOA.3
+ 8000280:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 8000284:	f44f 7280 	mov.w	r2, #256	@ 0x100
+ 8000288:	631a      	str	r2, [r3, #48]	@ 0x30
+  ADC1->CR |= 1<<28;            // Enable voltage regulator
+ 800028a:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 800028e:	689b      	ldr	r3, [r3, #8]
+ 8000290:	f04f 42a0 	mov.w	r2, #1342177280	@ 0x50000000
+ 8000294:	f043 5380 	orr.w	r3, r3, #268435456	@ 0x10000000
+ 8000298:	6093      	str	r3, [r2, #8]
+  timerDelayMs(10);            // Wait 1 ms to start-up voltage regulator
+ 800029a:	200a      	movs	r0, #10
+ 800029c:	f000 f994 	bl	80005c8 <timerDelayMs>
+
+  ADC1->CR |= 1<<0;             // Enable ADC1
+ 80002a0:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 80002a4:	689b      	ldr	r3, [r3, #8]
+ 80002a6:	f04f 42a0 	mov.w	r2, #1342177280	@ 0x50000000
+ 80002aa:	f043 0301 	orr.w	r3, r3, #1
+ 80002ae:	6093      	str	r3, [r2, #8]
+}
+ 80002b0:	bf00      	nop
+ 80002b2:	bd80      	pop	{r7, pc}
+ 80002b4:	40021000 	.word	0x40021000
+ 80002b8:	48000400 	.word	0x48000400
+ 80002bc:	50000300 	.word	0x50000300
+
+080002c0 <generateRandomNumber>:
+
+uint32_t generateRandomNumber(void)
+{
+ 80002c0:	b580      	push	{r7, lr}
+ 80002c2:	b084      	sub	sp, #16
+ 80002c4:	af00      	add	r7, sp, #0
+  long int rand = 0;
+ 80002c6:	2300      	movs	r3, #0
+ 80002c8:	60fb      	str	r3, [r7, #12]
+  unsigned int LSBit = 0;
+ 80002ca:	2300      	movs	r3, #0
+ 80002cc:	607b      	str	r3, [r7, #4]
+  unsigned int i = 0;
+ 80002ce:	2300      	movs	r3, #0
+ 80002d0:	60bb      	str	r3, [r7, #8]
+
+
+  timerDelayMs(10);                   // Wait 10 ms to stabilize ADC
+ 80002d2:	200a      	movs	r0, #10
+ 80002d4:	f000 f978 	bl	80005c8 <timerDelayMs>
+
+
+  rand = 0;                           // Clear variable rand
+ 80002d8:	2300      	movs	r3, #0
+ 80002da:	60fb      	str	r3, [r7, #12]
+  for (i = 0; i<32; i++)
+ 80002dc:	2300      	movs	r3, #0
+ 80002de:	60bb      	str	r3, [r7, #8]
+ 80002e0:	e021      	b.n	8000326 <generateRandomNumber+0x66>
+  {
+	ADC1->CR |= 1<<2;                 // Start analog-digital conversion
+ 80002e2:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 80002e6:	689b      	ldr	r3, [r3, #8]
+ 80002e8:	f04f 42a0 	mov.w	r2, #1342177280	@ 0x50000000
+ 80002ec:	f043 0304 	orr.w	r3, r3, #4
+ 80002f0:	6093      	str	r3, [r2, #8]
+	while (!(ADC1->ISR & 0x04)){}     // End of conversion reached?
+ 80002f2:	bf00      	nop
+ 80002f4:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 80002f8:	681b      	ldr	r3, [r3, #0]
+ 80002fa:	f003 0304 	and.w	r3, r3, #4
+ 80002fe:	2b00      	cmp	r3, #0
+ 8000300:	d0f8      	beq.n	80002f4 <generateRandomNumber+0x34>
+	LSBit = ADC1->DR & 0x01;          // Grab LSB of conversion
+ 8000302:	f04f 43a0 	mov.w	r3, #1342177280	@ 0x50000000
+ 8000306:	6c1b      	ldr	r3, [r3, #64]	@ 0x40
+ 8000308:	f003 0301 	and.w	r3, r3, #1
+ 800030c:	607b      	str	r3, [r7, #4]
+	LSBit = LSBit << i;               // Shift LSB (only one Bit) to Bit i
+ 800030e:	687a      	ldr	r2, [r7, #4]
+ 8000310:	68bb      	ldr	r3, [r7, #8]
+ 8000312:	fa02 f303 	lsl.w	r3, r2, r3
+ 8000316:	607b      	str	r3, [r7, #4]
+	rand = rand | LSBit;              // Insert it at the right place
+ 8000318:	68fa      	ldr	r2, [r7, #12]
+ 800031a:	687b      	ldr	r3, [r7, #4]
+ 800031c:	4313      	orrs	r3, r2
+ 800031e:	60fb      	str	r3, [r7, #12]
+  for (i = 0; i<32; i++)
+ 8000320:	68bb      	ldr	r3, [r7, #8]
+ 8000322:	3301      	adds	r3, #1
+ 8000324:	60bb      	str	r3, [r7, #8]
+ 8000326:	68bb      	ldr	r3, [r7, #8]
+ 8000328:	2b1f      	cmp	r3, #31
+ 800032a:	d9da      	bls.n	80002e2 <generateRandomNumber+0x22>
+  }
+  return rand;
+ 800032c:	68fb      	ldr	r3, [r7, #12]
+
+}
+ 800032e:	4618      	mov	r0, r3
+ 8000330:	3710      	adds	r7, #16
+ 8000332:	46bd      	mov	sp, r7
+ 8000334:	bd80      	pop	{r7, pc}
+	...
+
+08000338 <initLEDs>:
+
+#include "stm32g431xx.h"
+#include "led.h"
+#include "tools.h"
+
+void initLEDs(void) {
+ 8000338:	b480      	push	{r7}
+ 800033a:	af00      	add	r7, sp, #0
+    // 1. GPIO B Takt aktivieren
+    RCC->AHB2ENR |= (1 << 1);
+ 800033c:	4b0b      	ldr	r3, [pc, #44]	@ (800036c <initLEDs+0x34>)
+ 800033e:	6cdb      	ldr	r3, [r3, #76]	@ 0x4c
+ 8000340:	4a0a      	ldr	r2, [pc, #40]	@ (800036c <initLEDs+0x34>)
+ 8000342:	f043 0302 	orr.w	r3, r3, #2
+ 8000346:	64d3      	str	r3, [r2, #76]	@ 0x4c
+
+    // 2. Pin PB8 als digitalen Ausgang setzen (01 an Bitposition 16/17)
+    GPIOB->MODER &= ~(3 << 16); // Erst sauber löschen
+ 8000348:	4b09      	ldr	r3, [pc, #36]	@ (8000370 <initLEDs+0x38>)
+ 800034a:	681b      	ldr	r3, [r3, #0]
+ 800034c:	4a08      	ldr	r2, [pc, #32]	@ (8000370 <initLEDs+0x38>)
+ 800034e:	f423 3340 	bic.w	r3, r3, #196608	@ 0x30000
+ 8000352:	6013      	str	r3, [r2, #0]
+    GPIOB->MODER |=  (1 << 16); // Dann auf Output setzen
+ 8000354:	4b06      	ldr	r3, [pc, #24]	@ (8000370 <initLEDs+0x38>)
+ 8000356:	681b      	ldr	r3, [r3, #0]
+ 8000358:	4a05      	ldr	r2, [pc, #20]	@ (8000370 <initLEDs+0x38>)
+ 800035a:	f443 3380 	orr.w	r3, r3, #65536	@ 0x10000
+ 800035e:	6013      	str	r3, [r2, #0]
+
+    // (Die Timer-3-Interrupt-Konfiguration aus deinem Testcode kommt später
+    // hier hinein, wenn wir die led_playSequence() ausprogrammieren)
+}
+ 8000360:	bf00      	nop
+ 8000362:	46bd      	mov	sp, r7
+ 8000364:	f85d 7b04 	ldr.w	r7, [sp], #4
+ 8000368:	4770      	bx	lr
+ 800036a:	bf00      	nop
+ 800036c:	40021000 	.word	0x40021000
+ 8000370:	48000400 	.word	0x48000400
+
+08000374 <led_blinkSuccess>:
+
+void led_blinkSuccess(void) {
+ 8000374:	b580      	push	{r7, lr}
+ 8000376:	b082      	sub	sp, #8
+ 8000378:	af00      	add	r7, sp, #0
+    // Statechart sagt: LED 2x lang blinken
+    for(int i = 0; i < 2; i++) {
+ 800037a:	2300      	movs	r3, #0
+ 800037c:	607b      	str	r3, [r7, #4]
+ 800037e:	e016      	b.n	80003ae <led_blinkSuccess+0x3a>
+        GPIOB->ODR |= (1 << 8);  // LED an
+ 8000380:	4b0f      	ldr	r3, [pc, #60]	@ (80003c0 <led_blinkSuccess+0x4c>)
+ 8000382:	695b      	ldr	r3, [r3, #20]
+ 8000384:	4a0e      	ldr	r2, [pc, #56]	@ (80003c0 <led_blinkSuccess+0x4c>)
+ 8000386:	f443 7380 	orr.w	r3, r3, #256	@ 0x100
+ 800038a:	6153      	str	r3, [r2, #20]
+        timerDelayMs(500);     // lang warten
+ 800038c:	f44f 70fa 	mov.w	r0, #500	@ 0x1f4
+ 8000390:	f000 f91a 	bl	80005c8 <timerDelayMs>
+        GPIOB->ODR &= ~(1 << 8); // LED aus
+ 8000394:	4b0a      	ldr	r3, [pc, #40]	@ (80003c0 <led_blinkSuccess+0x4c>)
+ 8000396:	695b      	ldr	r3, [r3, #20]
+ 8000398:	4a09      	ldr	r2, [pc, #36]	@ (80003c0 <led_blinkSuccess+0x4c>)
+ 800039a:	f423 7380 	bic.w	r3, r3, #256	@ 0x100
+ 800039e:	6153      	str	r3, [r2, #20]
+        timerDelayMs(300);     // kurz Pause
+ 80003a0:	f44f 7096 	mov.w	r0, #300	@ 0x12c
+ 80003a4:	f000 f910 	bl	80005c8 <timerDelayMs>
+    for(int i = 0; i < 2; i++) {
+ 80003a8:	687b      	ldr	r3, [r7, #4]
+ 80003aa:	3301      	adds	r3, #1
+ 80003ac:	607b      	str	r3, [r7, #4]
+ 80003ae:	687b      	ldr	r3, [r7, #4]
+ 80003b0:	2b01      	cmp	r3, #1
+ 80003b2:	dde5      	ble.n	8000380 <led_blinkSuccess+0xc>
+    }
+}
+ 80003b4:	bf00      	nop
+ 80003b6:	bf00      	nop
+ 80003b8:	3708      	adds	r7, #8
+ 80003ba:	46bd      	mov	sp, r7
+ 80003bc:	bd80      	pop	{r7, pc}
+ 80003be:	bf00      	nop
+ 80003c0:	48000400 	.word	0x48000400
+
+080003c4 <led_blinkGameOver>:
+
+void led_blinkGameOver(void) {
+ 80003c4:	b580      	push	{r7, lr}
+ 80003c6:	b082      	sub	sp, #8
+ 80003c8:	af00      	add	r7, sp, #0
+    // Statechart sagt: LED 3x schnell blinken
+    for(int i = 0; i < 3; i++) {
+ 80003ca:	2300      	movs	r3, #0
+ 80003cc:	607b      	str	r3, [r7, #4]
+ 80003ce:	e014      	b.n	80003fa <led_blinkGameOver+0x36>
+        GPIOB->ODR |= (1 << 8);
+ 80003d0:	4b0e      	ldr	r3, [pc, #56]	@ (800040c <led_blinkGameOver+0x48>)
+ 80003d2:	695b      	ldr	r3, [r3, #20]
+ 80003d4:	4a0d      	ldr	r2, [pc, #52]	@ (800040c <led_blinkGameOver+0x48>)
+ 80003d6:	f443 7380 	orr.w	r3, r3, #256	@ 0x100
+ 80003da:	6153      	str	r3, [r2, #20]
+        timerDelayMs(150);     // kurz warten
+ 80003dc:	2096      	movs	r0, #150	@ 0x96
+ 80003de:	f000 f8f3 	bl	80005c8 <timerDelayMs>
+        GPIOB->ODR &= ~(1 << 8);
+ 80003e2:	4b0a      	ldr	r3, [pc, #40]	@ (800040c <led_blinkGameOver+0x48>)
+ 80003e4:	695b      	ldr	r3, [r3, #20]
+ 80003e6:	4a09      	ldr	r2, [pc, #36]	@ (800040c <led_blinkGameOver+0x48>)
+ 80003e8:	f423 7380 	bic.w	r3, r3, #256	@ 0x100
+ 80003ec:	6153      	str	r3, [r2, #20]
+        timerDelayMs(150);
+ 80003ee:	2096      	movs	r0, #150	@ 0x96
+ 80003f0:	f000 f8ea 	bl	80005c8 <timerDelayMs>
+    for(int i = 0; i < 3; i++) {
+ 80003f4:	687b      	ldr	r3, [r7, #4]
+ 80003f6:	3301      	adds	r3, #1
+ 80003f8:	607b      	str	r3, [r7, #4]
+ 80003fa:	687b      	ldr	r3, [r7, #4]
+ 80003fc:	2b02      	cmp	r3, #2
+ 80003fe:	dde7      	ble.n	80003d0 <led_blinkGameOver+0xc>
+    }
+}
+ 8000400:	bf00      	nop
+ 8000402:	bf00      	nop
+ 8000404:	3708      	adds	r7, #8
+ 8000406:	46bd      	mov	sp, r7
+ 8000408:	bd80      	pop	{r7, pc}
+ 800040a:	bf00      	nop
+ 800040c:	48000400 	.word	0x48000400
+
+08000410 <led_playSequence>:
+
+void led_playSequence(uint32_t sequence, uint8_t level) {
+ 8000410:	b580      	push	{r7, lr}
+ 8000412:	b084      	sub	sp, #16
+ 8000414:	af00      	add	r7, sp, #0
+ 8000416:	6078      	str	r0, [r7, #4]
+ 8000418:	460b      	mov	r3, r1
+ 800041a:	70fb      	strb	r3, [r7, #3]
+	// level 1 startet bei 5 bits
+	level = level + 5;
+ 800041c:	78fb      	ldrb	r3, [r7, #3]
+ 800041e:	3305      	adds	r3, #5
+ 8000420:	70fb      	strb	r3, [r7, #3]
+	// Gehe alle Bits bis zum aktuellen Level durch
+	    for(int i = 0; i < level; i++) {
+ 8000422:	2300      	movs	r3, #0
+ 8000424:	60fb      	str	r3, [r7, #12]
+ 8000426:	e026      	b.n	8000476 <led_playSequence+0x66>
+
+	        // Aktuelles Bit herausfiltern (0 oder 1)
+	        uint8_t currentBit = (sequence >> i) & 0x01;
+ 8000428:	687a      	ldr	r2, [r7, #4]
+ 800042a:	68fb      	ldr	r3, [r7, #12]
+ 800042c:	fa22 f303 	lsr.w	r3, r2, r3
+ 8000430:	b2db      	uxtb	r3, r3
+ 8000432:	f003 0301 	and.w	r3, r3, #1
+ 8000436:	72fb      	strb	r3, [r7, #11]
+
+	        GPIOB->ODR |= (1 << 8); // LED an
+ 8000438:	4b13      	ldr	r3, [pc, #76]	@ (8000488 <led_playSequence+0x78>)
+ 800043a:	695b      	ldr	r3, [r3, #20]
+ 800043c:	4a12      	ldr	r2, [pc, #72]	@ (8000488 <led_playSequence+0x78>)
+ 800043e:	f443 7380 	orr.w	r3, r3, #256	@ 0x100
+ 8000442:	6153      	str	r3, [r2, #20]
+
+	        // Je nachdem, ob es eine 1 oder 0 ist, warten wir unterschiedlich lange
+	        if (currentBit == 1) {
+ 8000444:	7afb      	ldrb	r3, [r7, #11]
+ 8000446:	2b01      	cmp	r3, #1
+ 8000448:	d104      	bne.n	8000454 <led_playSequence+0x44>
+	        	timerDelayMs(1000); // 1 = langes Leuchten
+ 800044a:	f44f 707a 	mov.w	r0, #1000	@ 0x3e8
+ 800044e:	f000 f8bb 	bl	80005c8 <timerDelayMs>
+ 8000452:	e003      	b.n	800045c <led_playSequence+0x4c>
+	        } else {
+	        	timerDelayMs(350); // 0 = kurzes Leuchten
+ 8000454:	f44f 70af 	mov.w	r0, #350	@ 0x15e
+ 8000458:	f000 f8b6 	bl	80005c8 <timerDelayMs>
+	        }
+
+	        GPIOB->ODR &= ~(1 << 8); // LED wieder aus
+ 800045c:	4b0a      	ldr	r3, [pc, #40]	@ (8000488 <led_playSequence+0x78>)
+ 800045e:	695b      	ldr	r3, [r3, #20]
+ 8000460:	4a09      	ldr	r2, [pc, #36]	@ (8000488 <led_playSequence+0x78>)
+ 8000462:	f423 7380 	bic.w	r3, r3, #256	@ 0x100
+ 8000466:	6153      	str	r3, [r2, #20]
+	        timerDelayMs(1000);     // Pause, bevor das nächste Bit kommt
+ 8000468:	f44f 707a 	mov.w	r0, #1000	@ 0x3e8
+ 800046c:	f000 f8ac 	bl	80005c8 <timerDelayMs>
+	    for(int i = 0; i < level; i++) {
+ 8000470:	68fb      	ldr	r3, [r7, #12]
+ 8000472:	3301      	adds	r3, #1
+ 8000474:	60fb      	str	r3, [r7, #12]
+ 8000476:	78fb      	ldrb	r3, [r7, #3]
+ 8000478:	68fa      	ldr	r2, [r7, #12]
+ 800047a:	429a      	cmp	r2, r3
+ 800047c:	dbd4      	blt.n	8000428 <led_playSequence+0x18>
+	    }
+}
+ 800047e:	bf00      	nop
+ 8000480:	bf00      	nop
+ 8000482:	3710      	adds	r7, #16
+ 8000484:	46bd      	mov	sp, r7
+ 8000486:	bd80      	pop	{r7, pc}
+ 8000488:	48000400 	.word	0x48000400
+
+0800048c <System_Init>:
+volatile GameState_t currentState = STATE_INIT;
+volatile uint8_t currentLevel = 1; // Start bei Level 1 (max 5)
+volatile uint32_t randomSeed = 0;
+
+/* --- HILFSFUNKTIONEN FÜR PERIPHERIE --- */
+void System_Init(void) {
+ 800048c:	b480      	push	{r7}
+ 800048e:	af00      	add	r7, sp, #0
+    // Hier kommt später die grundlegende Taktkonfiguration hin
+    RCC->CR |= (1 << 24); // PLL aktivieren (wie in den Vorübungen)
+ 8000490:	4b05      	ldr	r3, [pc, #20]	@ (80004a8 <System_Init+0x1c>)
+ 8000492:	681b      	ldr	r3, [r3, #0]
+ 8000494:	4a04      	ldr	r2, [pc, #16]	@ (80004a8 <System_Init+0x1c>)
+ 8000496:	f043 7380 	orr.w	r3, r3, #16777216	@ 0x1000000
+ 800049a:	6013      	str	r3, [r2, #0]
+
+}
+ 800049c:	bf00      	nop
+ 800049e:	46bd      	mov	sp, r7
+ 80004a0:	f85d 7b04 	ldr.w	r7, [sp], #4
+ 80004a4:	4770      	bx	lr
+ 80004a6:	bf00      	nop
+ 80004a8:	40021000 	.word	0x40021000
+
+080004ac <main>:
+
+
+int main(void) {
+ 80004ac:	b580      	push	{r7, lr}
+ 80004ae:	af00      	add	r7, sp, #0
+    // System-Grundkonfiguration beim Starten des Controllers
+    System_Init();
+ 80004b0:	f7ff ffec 	bl	800048c <System_Init>
+    initHardwareDelay();
+ 80004b4:	f000 f85e 	bl	8000574 <initHardwareDelay>
+    initRandomNumber();
+ 80004b8:	f7ff feae 	bl	8000218 <initRandomNumber>
+    initLEDs();
+ 80004bc:	f7ff ff3c 	bl	8000338 <initLEDs>
+     * initButtons();
+     */
+
+    /* --- HAUPTSCHLEIFE (ZUSTANDSMASCHINE) --- */
+    while (1) {
+        switch (currentState) {
+ 80004c0:	4b29      	ldr	r3, [pc, #164]	@ (8000568 <main+0xbc>)
+ 80004c2:	781b      	ldrb	r3, [r3, #0]
+ 80004c4:	b2db      	uxtb	r3, r3
+ 80004c6:	2b04      	cmp	r3, #4
+ 80004c8:	d848      	bhi.n	800055c <main+0xb0>
+ 80004ca:	a201      	add	r2, pc, #4	@ (adr r2, 80004d0 <main+0x24>)
+ 80004cc:	f852 f023 	ldr.w	pc, [r2, r3, lsl #2]
+ 80004d0:	080004e5 	.word	0x080004e5
+ 80004d4:	080004fd 	.word	0x080004fd
+ 80004d8:	08000565 	.word	0x08000565
+ 80004dc:	08000517 	.word	0x08000517
+ 80004e0:	08000543 	.word	0x08000543
+
+            case STATE_INIT:
+                // 1. Level auf 1 setzen
+                currentLevel = 1;
+ 80004e4:	4b21      	ldr	r3, [pc, #132]	@ (800056c <main+0xc0>)
+ 80004e6:	2201      	movs	r2, #1
+ 80004e8:	701a      	strb	r2, [r3, #0]
+
+                // 2. Zufalls-Seed über ADC holen
+                randomSeed = generateRandomNumber();
+ 80004ea:	f7ff fee9 	bl	80002c0 <generateRandomNumber>
+ 80004ee:	4603      	mov	r3, r0
+ 80004f0:	4a1f      	ldr	r2, [pc, #124]	@ (8000570 <main+0xc4>)
+ 80004f2:	6013      	str	r3, [r2, #0]
+                // 3. Erste Sequenz erzeugen
+
+                // Wenn das Setup fertig ist, gehen wir direkt in die Ausgabe
+                currentState = STATE_PLAY_SEQUENCE;
+ 80004f4:	4b1c      	ldr	r3, [pc, #112]	@ (8000568 <main+0xbc>)
+ 80004f6:	2201      	movs	r2, #1
+ 80004f8:	701a      	strb	r2, [r3, #0]
+                break;
+ 80004fa:	e034      	b.n	8000566 <main+0xba>
+                // 1. EXTI (Taster-Interrupts) deaktivieren, damit der Spieler
+                // während der Ausgabe nicht dazwischenfunken kann.
+
+                // 2. Die generierte Bitmaske/Sequenz über den Timer abarbeiten
+                // 3. LEDs entsprechend ein- und ausschalten
+            	led_playSequence(randomSeed, currentLevel);
+ 80004fc:	4b1c      	ldr	r3, [pc, #112]	@ (8000570 <main+0xc4>)
+ 80004fe:	681b      	ldr	r3, [r3, #0]
+ 8000500:	4a1a      	ldr	r2, [pc, #104]	@ (800056c <main+0xc0>)
+ 8000502:	7812      	ldrb	r2, [r2, #0]
+ 8000504:	b2d2      	uxtb	r2, r2
+ 8000506:	4611      	mov	r1, r2
+ 8000508:	4618      	mov	r0, r3
+ 800050a:	f7ff ff81 	bl	8000410 <led_playSequence>
+
+                // Sobald die Sequenz komplett ausgegeben wurde:
+                currentState = STATE_WAIT_FOR_INPUT;
+ 800050e:	4b16      	ldr	r3, [pc, #88]	@ (8000568 <main+0xbc>)
+ 8000510:	2202      	movs	r2, #2
+ 8000512:	701a      	strb	r2, [r3, #0]
+                break;
+ 8000514:	e027      	b.n	8000566 <main+0xba>
+                 */
+                break;
+
+            case STATE_LEVEL_SUCCESS:
+                // 1. LED 2x lang blinken lassen (Erfolgs-Feedback)
+            	led_blinkSuccess();
+ 8000516:	f7ff ff2d 	bl	8000374 <led_blinkSuccess>
+                // 2. Level erhöhen (Maximal bis Level 5)
+                if (currentLevel < 5) {
+ 800051a:	4b14      	ldr	r3, [pc, #80]	@ (800056c <main+0xc0>)
+ 800051c:	781b      	ldrb	r3, [r3, #0]
+ 800051e:	b2db      	uxtb	r3, r3
+ 8000520:	2b04      	cmp	r3, #4
+ 8000522:	d806      	bhi.n	8000532 <main+0x86>
+                    currentLevel++;
+ 8000524:	4b11      	ldr	r3, [pc, #68]	@ (800056c <main+0xc0>)
+ 8000526:	781b      	ldrb	r3, [r3, #0]
+ 8000528:	b2db      	uxtb	r3, r3
+ 800052a:	3301      	adds	r3, #1
+ 800052c:	b2da      	uxtb	r2, r3
+ 800052e:	4b0f      	ldr	r3, [pc, #60]	@ (800056c <main+0xc0>)
+ 8000530:	701a      	strb	r2, [r3, #0]
+                }
+
+                // 3. Kurze Pause (z.B. 3 Sekunden warten)
+                timerDelayMs(1000);
+ 8000532:	f44f 707a 	mov.w	r0, #1000	@ 0x3e8
+ 8000536:	f000 f847 	bl	80005c8 <timerDelayMs>
+
+                // Nächstes Level startet mit der neuen Sequenz
+                currentState = STATE_PLAY_SEQUENCE;
+ 800053a:	4b0b      	ldr	r3, [pc, #44]	@ (8000568 <main+0xbc>)
+ 800053c:	2201      	movs	r2, #1
+ 800053e:	701a      	strb	r2, [r3, #0]
+                break;
+ 8000540:	e011      	b.n	8000566 <main+0xba>
+
+            case STATE_GAME_OVER:
+                // 1. LED 3x schnell blinken lassen (Fehler-Feedback)
+            	led_blinkGameOver();
+ 8000542:	f7ff ff3f 	bl	80003c4 <led_blinkGameOver>
+                // 2. Level zurücksetzen
+                currentLevel = 1;
+ 8000546:	4b09      	ldr	r3, [pc, #36]	@ (800056c <main+0xc0>)
+ 8000548:	2201      	movs	r2, #1
+ 800054a:	701a      	strb	r2, [r3, #0]
+
+                // 3. Warten (z.B. 3 Sekunden) oder auf Reset-Taste reagieren
+                timerDelayMs(1000);
+ 800054c:	f44f 707a 	mov.w	r0, #1000	@ 0x3e8
+ 8000550:	f000 f83a 	bl	80005c8 <timerDelayMs>
+
+                // Zurück zum Startzustand
+                currentState = STATE_INIT;
+ 8000554:	4b04      	ldr	r3, [pc, #16]	@ (8000568 <main+0xbc>)
+ 8000556:	2200      	movs	r2, #0
+ 8000558:	701a      	strb	r2, [r3, #0]
+                break;
+ 800055a:	e004      	b.n	8000566 <main+0xba>
+
+            default:
+                // Sicherheitsnetz, falls mal ein undefinierter Zustand erreicht wird
+                currentState = STATE_INIT;
+ 800055c:	4b02      	ldr	r3, [pc, #8]	@ (8000568 <main+0xbc>)
+ 800055e:	2200      	movs	r2, #0
+ 8000560:	701a      	strb	r2, [r3, #0]
+                break;
+ 8000562:	e000      	b.n	8000566 <main+0xba>
+                break;
+ 8000564:	bf00      	nop
+        switch (currentState) {
+ 8000566:	e7ab      	b.n	80004c0 <main+0x14>
+ 8000568:	20000020 	.word	0x20000020
+ 800056c:	20000000 	.word	0x20000000
+ 8000570:	20000024 	.word	0x20000024
+
+08000574 <initHardwareDelay>:
+ *      Author: sojka
+ */
+#include "stm32g431xx.h"
+#include "tools.h"
+
+void initHardwareDelay(void) {
+ 8000574:	b480      	push	{r7}
+ 8000576:	af00      	add	r7, sp, #0
+    // 1. Takt für Timer 2 (TIM2) aktivieren (Bit 0 im APB1ENR1)
+    RCC->APB1ENR1 |= (1 << 0);
+ 8000578:	4b12      	ldr	r3, [pc, #72]	@ (80005c4 <initHardwareDelay+0x50>)
+ 800057a:	6d9b      	ldr	r3, [r3, #88]	@ 0x58
+ 800057c:	4a11      	ldr	r2, [pc, #68]	@ (80005c4 <initHardwareDelay+0x50>)
+ 800057e:	f043 0301 	orr.w	r3, r3, #1
+ 8000582:	6593      	str	r3, [r2, #88]	@ 0x58
+    // 2. Prescaler (Vorteiler) einstellen.
+    // Wir wollen, dass der Timer exakt jede Millisekunde (1 kHz) 1x hochzählt.
+    // Wenn dein Board nach dem Reset mit dem Standard-Takt von 16 MHz (HSI) läuft:
+    // 16.000.000 Hz / 16.000 = 1.000 Hz (1 ms pro Tick).
+    // Da der Prescaler immer (Wert + 1) rechnet, tragen wir 16000 - 1 ein:
+    TIM2->PSC = 16000 - 1;
+ 8000584:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
+ 8000588:	f643 627f 	movw	r2, #15999	@ 0x3e7f
+ 800058c:	629a      	str	r2, [r3, #40]	@ 0x28
+     * TIM2->PSC = 170000 - 1;
+     */
+
+    // 3. ARR auf maximalen Wert setzen (32-Bit Timer -> 0xFFFFFFFF)
+    // Er zählt also fast ewig, bevor er wieder auf 0 springt.
+    TIM2->ARR = 0xFFFFFFFF;
+ 800058e:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
+ 8000592:	f04f 32ff 	mov.w	r2, #4294967295
+ 8000596:	62da      	str	r2, [r3, #44]	@ 0x2c
+
+    // 4. WICHTIG: Update sofort erzwingen! (Das hat gefehlt)
+	TIM2->EGR |= (1 << 0);
+ 8000598:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
+ 800059c:	695b      	ldr	r3, [r3, #20]
+ 800059e:	f04f 4280 	mov.w	r2, #1073741824	@ 0x40000000
+ 80005a2:	f043 0301 	orr.w	r3, r3, #1
+ 80005a6:	6153      	str	r3, [r2, #20]
+
+    // 4. Timer starten (CEN-Bit im CR1 setzen)
+    TIM2->CR1 |= (1 << 0);
+ 80005a8:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
+ 80005ac:	681b      	ldr	r3, [r3, #0]
+ 80005ae:	f04f 4280 	mov.w	r2, #1073741824	@ 0x40000000
+ 80005b2:	f043 0301 	orr.w	r3, r3, #1
+ 80005b6:	6013      	str	r3, [r2, #0]
+}
+ 80005b8:	bf00      	nop
+ 80005ba:	46bd      	mov	sp, r7
+ 80005bc:	f85d 7b04 	ldr.w	r7, [sp], #4
+ 80005c0:	4770      	bx	lr
+ 80005c2:	bf00      	nop
+ 80005c4:	40021000 	.word	0x40021000
+
+080005c8 <timerDelayMs>:
+
+void timerDelayMs(uint32_t ms) {
+ 80005c8:	b480      	push	{r7}
+ 80005ca:	b083      	sub	sp, #12
+ 80005cc:	af00      	add	r7, sp, #0
+ 80005ce:	6078      	str	r0, [r7, #4]
+    // Wir nullen den Zähler des Timers beim Aufruf der Funktion
+    TIM2->CNT = 0;
+ 80005d0:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
+ 80005d4:	2200      	movs	r2, #0
+ 80005d6:	625a      	str	r2, [r3, #36]	@ 0x24
+
+    // Wir blockieren hier einfach so lange, bis der Timer die gewünschte
+    // Anzahl an Millisekunden hochgezählt hat. Keine Bitmasken nötig!
+    while (TIM2->CNT < ms) {
+ 80005d8:	bf00      	nop
+ 80005da:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
+ 80005de:	6a5b      	ldr	r3, [r3, #36]	@ 0x24
+ 80005e0:	687a      	ldr	r2, [r7, #4]
+ 80005e2:	429a      	cmp	r2, r3
+ 80005e4:	d8f9      	bhi.n	80005da <timerDelayMs+0x12>
+        // Warten...
+    }
+}
+ 80005e6:	bf00      	nop
+ 80005e8:	bf00      	nop
+ 80005ea:	370c      	adds	r7, #12
+ 80005ec:	46bd      	mov	sp, r7
+ 80005ee:	f85d 7b04 	ldr.w	r7, [sp], #4
+ 80005f2:	4770      	bx	lr
+
+080005f4 <Reset_Handler>:
+
+  .section .text.Reset_Handler
+  .weak Reset_Handler
+  .type Reset_Handler, %function
+Reset_Handler:
+  ldr   r0, =_estack
+ 80005f4:	480d      	ldr	r0, [pc, #52]	@ (800062c <LoopForever+0x2>)
+  mov   sp, r0          /* set stack pointer */
+ 80005f6:	4685      	mov	sp, r0
+/* Call the clock system initialization function.*/
+  bl  SystemInit
+ 80005f8:	f3af 8000 	nop.w
+
+/* Copy the data segment initializers from flash to SRAM */
+  ldr r0, =_sdata
+ 80005fc:	480c      	ldr	r0, [pc, #48]	@ (8000630 <LoopForever+0x6>)
+  ldr r1, =_edata
+ 80005fe:	490d      	ldr	r1, [pc, #52]	@ (8000634 <LoopForever+0xa>)
+  ldr r2, =_sidata
+ 8000600:	4a0d      	ldr	r2, [pc, #52]	@ (8000638 <LoopForever+0xe>)
+  movs r3, #0
+ 8000602:	2300      	movs	r3, #0
+  b LoopCopyDataInit
+ 8000604:	e002      	b.n	800060c <LoopCopyDataInit>
+
+08000606 <CopyDataInit>:
+
+CopyDataInit:
+  ldr r4, [r2, r3]
+ 8000606:	58d4      	ldr	r4, [r2, r3]
+  str r4, [r0, r3]
+ 8000608:	50c4      	str	r4, [r0, r3]
+  adds r3, r3, #4
+ 800060a:	3304      	adds	r3, #4
+
+0800060c <LoopCopyDataInit>:
+
+LoopCopyDataInit:
+  adds r4, r0, r3
+ 800060c:	18c4      	adds	r4, r0, r3
+  cmp r4, r1
+ 800060e:	428c      	cmp	r4, r1
+  bcc CopyDataInit
+ 8000610:	d3f9      	bcc.n	8000606 <CopyDataInit>
+
+/* Zero fill the bss segment. */
+  ldr r2, =_sbss
+ 8000612:	4a0a      	ldr	r2, [pc, #40]	@ (800063c <LoopForever+0x12>)
+  ldr r4, =_ebss
+ 8000614:	4c0a      	ldr	r4, [pc, #40]	@ (8000640 <LoopForever+0x16>)
+  movs r3, #0
+ 8000616:	2300      	movs	r3, #0
+  b LoopFillZerobss
+ 8000618:	e001      	b.n	800061e <LoopFillZerobss>
+
+0800061a <FillZerobss>:
+
+FillZerobss:
+  str  r3, [r2]
+ 800061a:	6013      	str	r3, [r2, #0]
+  adds r2, r2, #4
+ 800061c:	3204      	adds	r2, #4
+
+0800061e <LoopFillZerobss>:
+
+LoopFillZerobss:
+  cmp r2, r4
+ 800061e:	42a2      	cmp	r2, r4
+  bcc FillZerobss
+ 8000620:	d3fb      	bcc.n	800061a <FillZerobss>
+
+
+/* Call static constructors */
+  bl __libc_init_array
+ 8000622:	f000 f811 	bl	8000648 <__libc_init_array>
+/* Call the application's entry point.*/
+
+  bl main
+ 8000626:	f7ff ff41 	bl	80004ac <main>
+
+0800062a <LoopForever>:
+
+LoopForever:
+  b LoopForever
+ 800062a:	e7fe      	b.n	800062a <LoopForever>
+  ldr   r0, =_estack
+ 800062c:	20008000 	.word	0x20008000
+  ldr r0, =_sdata
+ 8000630:	20000000 	.word	0x20000000
+  ldr r1, =_edata
+ 8000634:	20000004 	.word	0x20000004
+  ldr r2, =_sidata
+ 8000638:	080006b0 	.word	0x080006b0
+  ldr r2, =_sbss
+ 800063c:	20000004 	.word	0x20000004
+  ldr r4, =_ebss
+ 8000640:	20000028 	.word	0x20000028
+
+08000644 <ADC1_2_IRQHandler>:
+ * @retval : None
+*/
+  .section .text.Default_Handler,"ax",%progbits
+Default_Handler:
+Infinite_Loop:
+  b Infinite_Loop
+ 8000644:	e7fe      	b.n	8000644 <ADC1_2_IRQHandler>
+	...
+
+08000648 <__libc_init_array>:
+ 8000648:	b570      	push	{r4, r5, r6, lr}
+ 800064a:	4b0d      	ldr	r3, [pc, #52]	@ (8000680 <__libc_init_array+0x38>)
+ 800064c:	4d0d      	ldr	r5, [pc, #52]	@ (8000684 <__libc_init_array+0x3c>)
+ 800064e:	1b5b      	subs	r3, r3, r5
+ 8000650:	109c      	asrs	r4, r3, #2
+ 8000652:	2600      	movs	r6, #0
+ 8000654:	42a6      	cmp	r6, r4
+ 8000656:	d109      	bne.n	800066c <__libc_init_array+0x24>
+ 8000658:	f000 f81a 	bl	8000690 <_init>
+ 800065c:	4d0a      	ldr	r5, [pc, #40]	@ (8000688 <__libc_init_array+0x40>)
+ 800065e:	4b0b      	ldr	r3, [pc, #44]	@ (800068c <__libc_init_array+0x44>)
+ 8000660:	1b5b      	subs	r3, r3, r5
+ 8000662:	109c      	asrs	r4, r3, #2
+ 8000664:	2600      	movs	r6, #0
+ 8000666:	42a6      	cmp	r6, r4
+ 8000668:	d105      	bne.n	8000676 <__libc_init_array+0x2e>
+ 800066a:	bd70      	pop	{r4, r5, r6, pc}
+ 800066c:	f855 3b04 	ldr.w	r3, [r5], #4
+ 8000670:	4798      	blx	r3
+ 8000672:	3601      	adds	r6, #1
+ 8000674:	e7ee      	b.n	8000654 <__libc_init_array+0xc>
+ 8000676:	f855 3b04 	ldr.w	r3, [r5], #4
+ 800067a:	4798      	blx	r3
+ 800067c:	3601      	adds	r6, #1
+ 800067e:	e7f2      	b.n	8000666 <__libc_init_array+0x1e>
+ 8000680:	080006a8 	.word	0x080006a8
+ 8000684:	080006a8 	.word	0x080006a8
+ 8000688:	080006a8 	.word	0x080006a8
+ 800068c:	080006ac 	.word	0x080006ac
+
+08000690 <_init>:
+ 8000690:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 8000692:	bf00      	nop
+ 8000694:	bcf8      	pop	{r3, r4, r5, r6, r7}
+ 8000696:	bc08      	pop	{r3}
+ 8000698:	469e      	mov	lr, r3
+ 800069a:	4770      	bx	lr
+
+0800069c <_fini>:
+ 800069c:	b5f8      	push	{r3, r4, r5, r6, r7, lr}
+ 800069e:	bf00      	nop
+ 80006a0:	bcf8      	pop	{r3, r4, r5, r6, r7}
+ 80006a2:	bc08      	pop	{r3}
+ 80006a4:	469e      	mov	lr, r3
+ 80006a6:	4770      	bx	lr

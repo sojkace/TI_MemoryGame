@@ -32,14 +32,14 @@ void initLEDBlinkInterrupt(void) {
 	// (Nested Vectored Interrupt Controller) aber den Interrupt für Timer 2!
 	// Richtig muss es lauten: NVIC_EnableIRQ(TIM3_IRQn);
 	// Ohne diese Korrektur ignoriert die CPU den Timer 3 komplett.
-	NVIC_EnableIRQ(TIM2_IRQn);
+	NVIC_EnableIRQ(TIM3_IRQn);
 
 	// Globale Freigabe: Erlaubt der CPU generell, auf Interrupts zu reagieren.
 	__enable_irq();
 
 }
 
-void startLEDBlinkInterrupt(void) {
+int main(void) {
 	initLEDBlinkInterrupt(); // Ruft die Initialisierung auf
 
 	// Die Main-Loop ist jetzt komplett leer!
@@ -62,7 +62,7 @@ void TIM3_IRQHandler(void) {
 	// ABER: '0<<0' ist mathematisch 0. Der Code führt also aus: TIM3->SR &= 0;
 	// Das löscht ungewollt ALLE Flags im Status Register auf einmal.
 	// Sauberer und sicherer: TIM3->SR &= ~(1<<0);
-	TIM3->SR &= 0 << 0;
+	TIM3->SR &= ~(1 << 0);
 
 	// ODR = Output Data Register.
 	// Das Zirkumflex (^) steht für ein bitweises XOR (Exklusiv-ODER).

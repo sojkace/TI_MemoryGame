@@ -1,26 +1,14 @@
 /*
- * random.c
+ * ADC_random_numbers.c
  *
- *  Created on: 25.05.2026
+ *  Created on: 19.06.2026
  *      Author: sojka
  */
 
+
 #include "stm32g431xx.h"
-
-
-
-void systickDelayMs(int n)
-{
-  SysTick->LOAD = 4000;         // Load clockcycless per millisecond
-  SysTick->VAL = 0;             // Clear current counting register
-  SysTick->CTRL = 0x5;          // Enable Systick
-
-  for(int i =0;i<n;i++)
-    {                           // Wait for 1ms until the COUNT flag is set
-      while((SysTick->CTRL & 0x10000) ==0){}
-    }
-  SysTick->CTRL =0;             // Disable Systick
-}
+#include "ADC_random_numbers.h"
+#include "tools.h"
 
 void initRandomNumber(void)
 {
@@ -40,7 +28,7 @@ void initRandomNumber(void)
   ADC1->CR &= ~(1<<29);         // Disable ADC1 deep power down mode
   ADC1->SQR1 = 0x0100;          // First conversion ADC1_IN4 == GPIOA.3
   ADC1->CR |= 1<<28;            // Enable voltage regulator
-  systickDelayMs(1);            // Wait 1 ms to start-up voltage regulator
+  timerDelayMs(10);            // Wait 1 ms to start-up voltage regulator
 
   ADC1->CR |= 1<<0;             // Enable ADC1
 }
@@ -51,8 +39,8 @@ uint32_t generateRandomNumber(void)
   unsigned int LSBit = 0;
   unsigned int i = 0;
 
-  initRandomNumber();
-  systickDelayMs(10);                   // Wait 10 ms to stabilize ADC
+
+  timerDelayMs(10);                   // Wait 10 ms to stabilize ADC
 
 
   rand = 0;                           // Clear variable rand
@@ -68,26 +56,5 @@ uint32_t generateRandomNumber(void)
 
 }
 
-
-
-int main(void) {
-    // Initialisiere den ADC (und den Systick für den Delay)
-    initRandomNumber();
-    // Variable, die wir im Debugger beobachten wollen
-    uint32_t my_random_seed = 0;
-
-    while (1) {
-        // Zufallszahl generieren
-        my_random_seed = generateRandomNumber();
-        if (my_random_seed % 2 == 0) {
-            GPIOB->ODR |= (1<<8);  // LED an
-        } else {
-            GPIOB->ODR &= ~(1<<8); // LED aus
-        }
-
-        // Kurze Pause, damit der Debugger entspannt mitlesen kann
-        systickDelayMs(500);
-    }
-}
 
 

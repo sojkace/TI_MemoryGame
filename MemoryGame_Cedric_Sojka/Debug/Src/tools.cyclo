@@ -1,0 +1,2 @@
+../Src/tools.c:10:6:initHardwareDelay	1
+../Src/tools.c:37:6:timerDelayMs	2

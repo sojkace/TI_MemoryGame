@@ -1,0 +1,7 @@
+"./Src/ADC_random_numbers.o"
+"./Src/led.o"
+"./Src/main.o"
+"./Src/syscalls.o"
+"./Src/sysmem.o"
+"./Src/tools.o"
+"./Startup/startup_stm32g431kbtx.o"
