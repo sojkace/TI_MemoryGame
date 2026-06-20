@@ -1,4 +1,5 @@
 "./Src/ADC_random_numbers.o"
+"./Src/button.o"
 "./Src/led.o"
 "./Src/main.o"
 "./Src/syscalls.o"

@@ -6,6 +6,7 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
 ../Src/ADC_random_numbers.c \
+../Src/button.c \
 ../Src/led.c \
 ../Src/main.c \
 ../Src/syscalls.c \
@@ -14,6 +15,7 @@ C_SRCS += \
 
 OBJS += \
 ./Src/ADC_random_numbers.o \
+./Src/button.o \
 ./Src/led.o \
 ./Src/main.o \
 ./Src/syscalls.o \
@@ -22,6 +24,7 @@ OBJS += \
 
 C_DEPS += \
 ./Src/ADC_random_numbers.d \
+./Src/button.d \
 ./Src/led.d \
 ./Src/main.d \
 ./Src/syscalls.d \
@@ -36,7 +39,7 @@ Src/%.o Src/%.su Src/%.cyclo: ../Src/%.c Src/subdir.mk
 clean: clean-Src
 
 clean-Src:
-	-$(RM) ./Src/ADC_random_numbers.cyclo ./Src/ADC_random_numbers.d ./Src/ADC_random_numbers.o ./Src/ADC_random_numbers.su ./Src/led.cyclo ./Src/led.d ./Src/led.o ./Src/led.su ./Src/main.cyclo ./Src/main.d ./Src/main.o ./Src/main.su ./Src/syscalls.cyclo ./Src/syscalls.d ./Src/syscalls.o ./Src/syscalls.su ./Src/sysmem.cyclo ./Src/sysmem.d ./Src/sysmem.o ./Src/sysmem.su ./Src/tools.cyclo ./Src/tools.d ./Src/tools.o ./Src/tools.su
+	-$(RM) ./Src/ADC_random_numbers.cyclo ./Src/ADC_random_numbers.d ./Src/ADC_random_numbers.o ./Src/ADC_random_numbers.su ./Src/button.cyclo ./Src/button.d ./Src/button.o ./Src/button.su ./Src/led.cyclo ./Src/led.d ./Src/led.o ./Src/led.su ./Src/main.cyclo ./Src/main.d ./Src/main.o ./Src/main.su ./Src/syscalls.cyclo ./Src/syscalls.d ./Src/syscalls.o ./Src/syscalls.su ./Src/sysmem.cyclo ./Src/sysmem.d ./Src/sysmem.o ./Src/sysmem.su ./Src/tools.cyclo ./Src/tools.d ./Src/tools.o ./Src/tools.su
 
 .PHONY: clean-Src
 

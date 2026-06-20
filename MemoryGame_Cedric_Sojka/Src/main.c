@@ -6,7 +6,7 @@
 // Eigene Module einbinden (sobald erstellt)
 #include "ADC_random_numbers.h"
 #include "led.h"
-// #include "button.h"
+#include "button.h"
 #include "tools.h"
 
 /* --- 1. ZUSTANDSDEFINITIONEN (FSM) --- */
@@ -23,12 +23,44 @@ typedef enum {
 volatile GameState_t currentState = STATE_INIT;
 volatile uint8_t currentLevel = 1; // Start bei Level 1 (max 5)
 volatile uint32_t randomSeed = 0;
+volatile uint8_t inputBitIndex = 0; // 2. ANPASSUNG: Zählt, das wievielte Bit der Spieler gerade eingibt
 
 /* --- HILFSFUNKTIONEN FÜR PERIPHERIE --- */
 void System_Init(void) {
     // Hier kommt später die grundlegende Taktkonfiguration hin
     RCC->CR |= (1 << 24); // PLL aktivieren (wie in den Vorübungen)
 
+}
+
+/* --- 3. ANPASSUNG: LOGIK-FUNKTION FÜR DIE INTERRUPTS ---
+ * Diese Funktion wird automatisch aus der button.c aufgerufen,
+ * sobald eine steigende Flanke an PA0 oder PA2 erkannt wird.
+ */
+void processPlayerInput(uint8_t bitEntered) {
+    // Eingaben komplett ignorieren, wenn das Spiel nicht im Warte-Modus ist
+    if (currentState != STATE_WAIT_FOR_INPUT) {
+        return;
+    }
+
+
+    // Das erwartete Bit aus dem randomSeed herausschneiden (Index wandert mit)
+    uint8_t expectedBit = (randomSeed >> inputBitIndex) & 0x01;
+
+    if (bitEntered == expectedBit) {
+        // Bit war korrekt!
+
+        inputBitIndex++;
+
+        // Prüfen, ob das Level vollständig erfolgreich eingegeben wurde
+        if (inputBitIndex >= (currentLevel + 4)) {
+            currentState = STATE_LEVEL_SUCCESS;
+        } else {
+        	led_inputBlink();
+        }
+    } else {
+        // Bit war falsch -> Sofortiger Wechsel zu Game Over
+        currentState = STATE_GAME_OVER;
+    }
 }
 
 
@@ -38,6 +70,7 @@ int main(void) {
     initHardwareDelay();
     initRandomNumber();
     initLEDs();
+    initButtons();
 
     /* * Hier werden später die Module initialisiert, z.B.:
      * initRandomNumber();
@@ -69,19 +102,18 @@ int main(void) {
                 // 3. LEDs entsprechend ein- und ausschalten
             	led_playSequence(randomSeed, currentLevel);
 
+            	// 5. ANPASSUNG: Den Eingabe-Zähler für das neue Level auf 0 zurücksetzen
+				inputBitIndex = 0;
+
                 // Sobald die Sequenz komplett ausgegeben wurde:
                 currentState = STATE_WAIT_FOR_INPUT;
                 break;
 
             case STATE_WAIT_FOR_INPUT:
-                // 1. EXTI (Taster-Interrupts) aktivieren
-                // 2. Warten auf die Eingabe des Spielers
-
-                /*
-                 * Die Überprüfung der Taster passiert primär in den Interrupt-Service-Routinen (ISR).
-                 * Ein falscher Tastendruck setztcurrentState = STATE_GAME_OVER;
-                 * Das letzte korrekte Bit setzt currentState = STATE_LEVEL_SUCCESS;
-                 */
+            	/* In diesem Zustand macht die Hauptschleife absolut gar nichts.
+				 * Der Controller wartet passiv. Die Zustandsänderung passiert
+				 * ausschließlich im Hintergrund über die processPlayerInput-Funktion.
+				 */
                 break;
 
             case STATE_LEVEL_SUCCESS:
@@ -90,10 +122,12 @@ int main(void) {
                 // 2. Level erhöhen (Maximal bis Level 5)
                 if (currentLevel < 5) {
                     currentLevel++;
+                } else {
+                	currentState = STATE_INIT;
                 }
 
                 // 3. Kurze Pause (z.B. 3 Sekunden warten)
-                timerDelayMs(1000);
+                timerDelayMs(3000);
 
                 // Nächstes Level startet mit der neuen Sequenz
                 currentState = STATE_PLAY_SEQUENCE;

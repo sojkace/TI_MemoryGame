@@ -25,9 +25,9 @@ void led_blinkSuccess(void) {
     // Statechart sagt: LED 2x lang blinken
     for(int i = 0; i < 2; i++) {
         GPIOB->ODR |= (1 << 8);  // LED an
-        timerDelayMs(500);     // lang warten
+        timerDelayMs(150);     // lang warten
         GPIOB->ODR &= ~(1 << 8); // LED aus
-        timerDelayMs(300);     // kurz Pause
+        timerDelayMs(150);     // kurz Pause
     }
 }
 
@@ -39,6 +39,13 @@ void led_blinkGameOver(void) {
         GPIOB->ODR &= ~(1 << 8);
         timerDelayMs(150);
     }
+}
+
+void led_inputBlink(void) {
+	GPIOB->ODR |= (1 << 8);  // LED an
+	timerDelayMs(150);     // lang warten
+	GPIOB->ODR &= ~(1 << 8); // LED aus
+	timerDelayMs(150);
 }
 
 void led_playSequence(uint32_t sequence, uint8_t level) {

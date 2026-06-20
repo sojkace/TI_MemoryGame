@@ -35,13 +35,14 @@ void initHardwareDelay(void) {
 }
 
 void timerDelayMs(uint32_t ms) {
-    // Wir nullen den Zähler des Timers beim Aufruf der Funktion
-    TIM2->CNT = 0;
+    // 1. Aktuelle "Uhrzeit" merken, OHNE den Timer zu verändern oder zu nullen
+    uint32_t startTime = TIM2->CNT;
 
-    // Wir blockieren hier einfach so lange, bis der Timer die gewünschte
-    // Anzahl an Millisekunden hochgezählt hat. Keine Bitmasken nötig!
-    while (TIM2->CNT < ms) {
-        // Warten...
+    // 2. Warten, bis die Differenz zwischen Jetzt und Startzeit erreicht ist.
+    // (Dank der unsigned 32-Bit-Mathematik funktioniert das sogar fehlerfrei,
+    // falls der Timer nach 49 Tagen mal überlaufen sollte!)
+    while ((TIM2->CNT - startTime) < ms) {
+        // Einfach Däumchen drehen und warten...
     }
 }
 
