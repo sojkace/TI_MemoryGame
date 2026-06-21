@@ -1,48 +1,41 @@
-/*
- * tools.c
- *
- *  Created on: 19.06.2026
- *      Author: sojka
- */
 #include "stm32g431xx.h"
 #include "tools.h"
 
+/* --- INITIALISIERUNG DES HARDWARE-TIMERS (TIM2) --- */
 void initHardwareDelay(void) {
-    // 1. Takt für Timer 2 (TIM2) aktivieren (Bit 0 im APB1ENR1)
+    // 1. Takt für Timer 2 (TIM2) auf dem APB1-Bus aktivieren (Bit 0)
     RCC->APB1ENR1 |= (1 << 0);
 
     // 2. Prescaler (Vorteiler) einstellen.
-    // Wir wollen, dass der Timer exakt jede Millisekunde (1 kHz) 1x hochzählt.
-    // Wenn dein Board nach dem Reset mit dem Standard-Takt von 16 MHz (HSI) läuft:
-    // 16.000.000 Hz / 16.000 = 1.000 Hz (1 ms pro Tick).
-    // Da der Prescaler immer (Wert + 1) rechnet, tragen wir 16000 - 1 ein:
+    // Ziel: Der Timer soll exakt jede Millisekunde (1 kHz) um 1 hochzählen.
+    // Bei einem Standard-Systemtakt von 16 MHz (HSI): 16.000.000 Hz / 16.000 = 1.000 Hz.
+    // Da die Hardware immer (Wert + 1) rechnet, tragen wir (16000 - 1) ein.
     TIM2->PSC = 16000 - 1;
 
-    /* HINWEIS: Falls du den Systemtakt später über die PLL auf die maximalen
-     * 170 MHz des STM32G4 hochdrehst, musst du diesen Wert anpassen zu:
-     * TIM2->PSC = 170000 - 1;
-     */
-
-    // 3. ARR auf maximalen Wert setzen (32-Bit Timer -> 0xFFFFFFFF)
-    // Er zählt also fast ewig, bevor er wieder auf 0 springt.
+    // 3. Auto-Reload-Register (ARR) auf den maximalen Wert setzen.
+    // TIM2 ist ein 32-Bit-Timer. Mit 0xFFFFFFFF läuft er über 49 Tage, bevor er überläuft.
+    // Dies garantiert eine fortlaufende, unterbrechungsfreie Systemzeit für das Debouncing.
     TIM2->ARR = 0xFFFFFFFF;
 
-    // 4. WICHTIG: Update sofort erzwingen! (Das hat gefehlt)
-	TIM2->EGR |= (1 << 0);
+    // 4. Update-Generation (UG) erzwingen.
+    // Dies stellt sicher, dass der Timer den neuen Prescaler-Wert sofort übernimmt
+    // und nicht erst nach einem eventuellen Überlauf des alten Wertes.
+    // TIM2->EGR |= (1 << 0);
 
-    // 4. Timer starten (CEN-Bit im CR1 setzen)
+    // 5. Timer 2 endgültig starten (CEN-Bit setzen)
     TIM2->CR1 |= (1 << 0);
 }
 
+/* --- NICHT-DESTRUKTIVE VERZÖGERUNGSFUNKTION --- */
 void timerDelayMs(uint32_t ms) {
-    // 1. Aktuelle "Uhrzeit" merken, OHNE den Timer zu verändern oder zu nullen
+    // 1. Aktuelle "Systemzeit" sichern, OHNE das Timer-Register (CNT) zu verändern.
+    // Dies ist essenziell, um das Debouncing in anderen Interrupts nicht zu zerstören.
     uint32_t startTime = TIM2->CNT;
 
-    // 2. Warten, bis die Differenz zwischen Jetzt und Startzeit erreicht ist.
-    // (Dank der unsigned 32-Bit-Mathematik funktioniert das sogar fehlerfrei,
-    // falls der Timer nach 49 Tagen mal überlaufen sollte!)
+    // 2. Aktives Warten (Polling), bis die geforderte Zeitdifferenz erreicht ist.
+    // Durch die unsigned 32-Bit-Arithmetik wird ein eventueller Timer-Überlauf
+    // nach 49 Tagen automatisch korrekt gehandhabt.
     while ((TIM2->CNT - startTime) < ms) {
-        // Einfach Däumchen drehen und warten...
+        // Leere Schleife zum Halten der Ausführung
     }
 }
-

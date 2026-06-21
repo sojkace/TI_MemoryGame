@@ -1,74 +1,76 @@
-/*
- * led.c
- *
- *  Created on: 19.06.2026
- *      Author: sojka
- */
-
 #include "stm32g431xx.h"
 #include "led.h"
 #include "tools.h"
 
+/* --- INITIALISIERUNG DER HARDWARE FÜR DIE LED --- */
 void initLEDs(void) {
-    // 1. GPIO B Takt aktivieren
+    // 1. Takt für GPIO Port B aktivieren (Bus AHB2)
     RCC->AHB2ENR |= (1 << 1);
 
-    // 2. Pin PB8 als digitalen Ausgang setzen (01 an Bitposition 16/17)
-    GPIOB->MODER &= ~(3 << 16); // Erst sauber löschen
-    GPIOB->MODER |=  (1 << 16); // Dann auf Output setzen
-
-    // (Die Timer-3-Interrupt-Konfiguration aus deinem Testcode kommt später
-    // hier hinein, wenn wir die led_playSequence() ausprogrammieren)
+    // 2. Pin PB8 als digitalen Ausgang konfigurieren (Bitmaske: 01)
+    // Dieser Pin steuert die grüne User-LED auf dem STM32G431-Nucleo-Board
+    GPIOB->MODER &= ~(3 << 16); // Modus-Register für Pin 8 (Bits 16 & 17) zurücksetzen
+    GPIOB->MODER |=  (1 << 16); // Auf General Purpose Output Mode setzen
 }
 
+/* --- FEEDBACK-FUNKTIONEN (SPIELSTATUS) --- */
+
+// Signalisiert den erfolgreichen Abschluss eines Levels (2x langes Blinken)
 void led_blinkSuccess(void) {
-    // Statechart sagt: LED 2x lang blinken
     for(int i = 0; i < 2; i++) {
-        GPIOB->ODR |= (1 << 8);  // LED an
-        timerDelayMs(150);     // lang warten
-        GPIOB->ODR &= ~(1 << 8); // LED aus
-        timerDelayMs(150);     // kurz Pause
+        GPIOB->ODR |= (1 << 8);  // LED einschalten
+        timerDelayMs(150);       // Leuchtdauer
+        GPIOB->ODR &= ~(1 << 8); // LED ausschalten
+        timerDelayMs(150);       // Pausendauer
     }
 }
 
+// Signalisiert einen Fehler und den Reset des Spiels (3x kurzes Blinken)
 void led_blinkGameOver(void) {
-    // Statechart sagt: LED 3x schnell blinken
     for(int i = 0; i < 3; i++) {
         GPIOB->ODR |= (1 << 8);
-        timerDelayMs(150);     // kurz warten
+        timerDelayMs(150);
         GPIOB->ODR &= ~(1 << 8);
         timerDelayMs(150);
     }
 }
 
-void led_inputBlink(void) {
-	GPIOB->ODR |= (1 << 8);  // LED an
-	timerDelayMs(150);     // lang warten
-	GPIOB->ODR &= ~(1 << 8); // LED aus
-	timerDelayMs(150);
+// Direkte optische Rückmeldung beim Betätigen der Touch-Pins durch den Spieler
+void led_inputBlink(uint8_t bitEntered) {
+    GPIOB->ODR |= (1 << 8); // LED sofort einschalten
+
+    // Unterscheidung der Leuchtdauer basierend auf der Eingabe
+    if (bitEntered == 1) {
+        timerDelayMs(1000); // Langes Leuchten für logische "1"
+    } else {
+        timerDelayMs(350);  // Kurzes Leuchten für logische "0"
+    }
+
+    GPIOB->ODR &= ~(1 << 8); // LED nach Ablauf der Zeit ausschalten
 }
 
+/* --- ABSPIELEN DER ZUFALLS-SEQUENZ --- */
+// Wandelt die LSBs des Random-Seeds in optische Signale um
 void led_playSequence(uint32_t sequence, uint8_t level) {
-	// level 1 startet bei 5 bits
-	level = level + 5;
-	// Gehe alle Bits bis zum aktuellen Level durch
-	    for(int i = 0; i < (level - 1); i++) {
+    // Gemäß Anforderung: Level 1 beginnt mit 5 abzufragenden Bits
+    level = level + 5;
 
-	        // Aktuelles Bit herausfiltern (0 oder 1)
-	        uint8_t currentBit = (sequence >> i) & 0x01;
+    // Iteration über die geforderte Anzahl an Bits für das aktuelle Level
+    for(int i = 0; i < (level - 1); i++) {
 
-	        GPIOB->ODR |= (1 << 8); // LED an
+        // Isoliert das Bit an Position 'i' durch Rechts-Shift und bitweise UND-Verknüpfung
+        uint8_t currentBit = (sequence >> i) & 0x01;
 
-	        // Je nachdem, ob es eine 1 oder 0 ist, warten wir unterschiedlich lange
-	        if (currentBit == 1) {
-	        	timerDelayMs(1000); // 1 = langes Leuchten
-	        } else {
-	        	timerDelayMs(350); // 0 = kurzes Leuchten
-	        }
+        GPIOB->ODR |= (1 << 8); // LED aktivieren
 
-	        GPIOB->ODR &= ~(1 << 8); // LED wieder aus
-	        timerDelayMs(1000);     // Pause, bevor das nächste Bit kommt
-	    }
+        // Zeitliche Unterscheidung der Signalarten
+        if (currentBit == 1) {
+            timerDelayMs(1000); // 1 = langes Signal
+        } else {
+            timerDelayMs(350);  // 0 = kurzes Signal
+        }
+
+        GPIOB->ODR &= ~(1 << 8); // LED deaktivieren
+        timerDelayMs(1000);      // Pause zur sauberen optischen Trennung der Bits
+    }
 }
-
-

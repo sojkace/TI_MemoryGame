@@ -1,2 +1,2 @@
-../Src/ADC_random_numbers.c:13:6:initRandomNumber	1
-../Src/ADC_random_numbers.c:36:10:generateRandomNumber	3
+../Src/ADC_random_numbers.c:6:6:initRandomNumber	1
+../Src/ADC_random_numbers.c:39:10:generateRandomNumber	3

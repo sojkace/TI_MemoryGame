@@ -1,60 +1,72 @@
-/*
- * ADC_random_numbers.c
- *
- *  Created on: 19.06.2026
- *      Author: sojka
- */
-
-
 #include "stm32g431xx.h"
 #include "ADC_random_numbers.h"
 #include "tools.h"
 
-void initRandomNumber(void)
-{
-  // Port Initializiation
-  RCC->CR |= 1<<24;             //	it Bit24: Enable RCC clock
-  RCC->AHB2ENR |= 1<<1; 	// Bit1: Enable clocks for GPIOB
-  GPIOB->MODER = 0x00010000; 	// Bit8: Set PB8 (LED) as digital output
+/* --- INITIALISIERUNG DES ADC FÜR DIE ZUFALLSGENERIERUNG --- */
+void initRandomNumber(void) {
+    // Takt für den Peripherie-Bus B (LEDs) und A (ADC-Eingang) aktivieren
+    RCC->AHB2ENR |= (1 << 1) | (1 << 0);
 
-  // ADC Initializiation: Input Port-Pin
-  RCC->AHB2ENR |= 1<<0; 	// Bit1: Enable clocks for GPIOA
-  GPIOA->MODER |= 0xC0; 	// Bit8: Set PA3 to analog mode
+    // PB8 als digitalen Ausgang konfigurieren (wird vom ADC-Modul zur Diagnose/Kontrolle mitinitialisiert)
+    GPIOB->MODER &= ~(3 << 16);
+    GPIOB->MODER |= (1 << 16);
 
-  // ADC Initializiation: Conversion
-  RCC->AHB2ENR |= 1<<13; 	// Bit13: Enable clocks for ADC1 & ADC2
-  ADC12_COMMON->CCR |= 1<<17;   // Bit17: hclk/2 clock mode for ADC1 & ADC2
+    // PA3 (verbunden mit ADC1_IN4) in den analogen Modus versetzen
+    // Ein offener analoger Pin fängt elektromagnetisches Rauschen auf ("White Noise")
+    GPIOA->MODER |= (3 << 6);
 
-  ADC1->CR &= ~(1<<29);         // Disable ADC1 deep power down mode
-  ADC1->SQR1 = 0x0100;          // First conversion ADC1_IN4 == GPIOA.3
-  ADC1->CR |= 1<<28;            // Enable voltage regulator
-  timerDelayMs(10);            // Wait 1 ms to start-up voltage regulator
+    // Taktsignale für die ADC-Module aktivieren
+    RCC->AHB2ENR |= (1 << 13);
 
-  ADC1->CR |= 1<<0;             // Enable ADC1
+    // ADC-Takt auf hclk/2 konfigurieren (sicherstellen, dass der ADC im spezifizierten Bereich arbeitet)
+    ADC12_COMMON->CCR |= (1 << 17);
+
+    // ADC aus dem Stromsparmodus (Deep Power Down) aufwecken
+    ADC1->CR &= ~(1 << 29);
+
+    // ADC-Sequenzer konfigurieren: Die erste (und einzige) Wandlung erfolgt an Kanal 4 (PA3)
+    ADC1->SQR1 = (4 << 6); // Korrigiert von 0x0100 auf die saubere Bitmaske für Kanal 4
+
+    // Internen Spannungsregler des ADC aktivieren und Stabilisierungszeit abwarten
+    ADC1->CR |= (1 << 28);
+    timerDelayMs(10);
+
+    // ADC-Modul scharfschalten
+    ADC1->CR |= (1 << 0);
 }
 
-uint32_t generateRandomNumber(void)
-{
-  long int rand = 0;
-  unsigned int LSBit = 0;
-  unsigned int i = 0;
+/* --- GENERIERUNG EINER ECHTEN 32-BIT-ZUFALLSZAHL --- */
+uint32_t generateRandomNumber(void) {
+    uint32_t rand = 0;
+    uint32_t currentBit = 0;
 
+    // Erneute Stabilisierungszeit garantieren, bevor Messungen vorgenommen werden
+    timerDelayMs(10);
 
-  timerDelayMs(10);                   // Wait 10 ms to stabilize ADC
+    /* * Aufbau einer 32-Bit-Zufallszahl:
+     * Da das physikalische Rauschen auf dem analogen Pin am stärksten im
+     * niederwertigsten Bit (LSB) der 12-Bit-Wandlung auftritt, wird dieses
+     * LSB isoliert. In 32 iterativen Messungen wird so Bit für Bit eine
+     * echte, hardwarebasierte Zufallszahl (True Random Number) generiert.
+     */
+    for (int i = 0; i < 32; i++) {
+        // Wandlung an ADC1 manuell anstoßen
+        ADC1->CR |= (1 << 2);
 
+        // Warten (Polling), bis das End-Of-Conversion (EOC) Flag gesetzt ist
+        while (!(ADC1->ISR & (1 << 2))) {
+            // ...
+        }
 
-  rand = 0;                           // Clear variable rand
-  for (i = 0; i<32; i++)
-  {
-	ADC1->CR |= 1<<2;                 // Start analog-digital conversion
-	while (!(ADC1->ISR & 0x04)){}     // End of conversion reached?
-	LSBit = ADC1->DR & 0x01;          // Grab LSB of conversion
-	LSBit = LSBit << i;               // Shift LSB (only one Bit) to Bit i
-	rand = rand | LSBit;              // Insert it at the right place
-  }
-  return rand;
+        // Das unterste Bit (LSB) der 12-Bit-Wandlung maskieren und extrahieren
+        currentBit = ADC1->DR & 0x01;
 
+        // Das extrahierte Zufallsbit an die entsprechende Position (i) schieben
+        currentBit = currentBit << i;
+
+        // Das Bit in die finale 32-Bit-Zufallszahl einfügen
+        rand |= currentBit;
+    }
+
+    return rand;
 }
-
-
-

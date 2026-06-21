@@ -1,9 +1,6 @@
 #include "stm32g431xx.h"
 
-
-
-
-// Eigene Module einbinden (sobald erstellt)
+// Eigene Peripherie- und Logikmodule
 #include "ADC_random_numbers.h"
 #include "led.h"
 #include "button.h"
@@ -27,127 +24,115 @@ volatile uint8_t inputBitIndex = 0; // 2. ANPASSUNG: Zählt, das wievielte Bit d
 
 /* --- HILFSFUNKTIONEN FÜR PERIPHERIE --- */
 void System_Init(void) {
-    // Hier kommt später die grundlegende Taktkonfiguration hin
+	// Konfiguration des Systemtakts (Aktivierung der PLL)
     RCC->CR |= (1 << 24); // PLL aktivieren (wie in den Vorübungen)
 
 }
 
-/* --- 3. ANPASSUNG: LOGIK-FUNKTION FÜR DIE INTERRUPTS ---
- * Diese Funktion wird automatisch aus der button.c aufgerufen,
- * sobald eine steigende Flanke an PA0 oder PA2 erkannt wird.
- */
+/* --- SPIELLOGIK --- */
+// Wird asynchron von den EXTI-Routinen aufgerufen, um Tastereingaben auszuwerten.
 void processPlayerInput(uint8_t bitEntered) {
-    // Eingaben komplett ignorieren, wenn das Spiel nicht im Warte-Modus ist
+	// Taster-Interrupts während der Verarbeitung blockieren
+	NVIC_DisableIRQ(EXTI0_IRQn);
+	NVIC_DisableIRQ(EXTI2_IRQn);
+
+	// Eingaben ignorieren, wenn das Spiel nicht auf eine Eingabe wartet
     if (currentState != STATE_WAIT_FOR_INPUT) {
         return;
     }
 
+    // Optisches Feedback für die Berührung geben
+    led_inputBlink(bitEntered);
 
-    // Das erwartete Bit aus dem randomSeed herausschneiden (Index wandert mit)
+
+    // Erwartetes Bit an der aktuellen Position der Sequenz extrahieren
     uint8_t expectedBit = (randomSeed >> inputBitIndex) & 0x01;
 
+    // Abgleich der Eingabe mit der generierten Sequenz
     if (bitEntered == expectedBit) {
-        // Bit war korrekt!
-
         inputBitIndex++;
 
-        // Prüfen, ob das Level vollständig erfolgreich eingegeben wurde
+        // Prüfen, ob die geforderte Anzahl an Bits für dieses Level erreicht wurde (Lvl 1 startet mit 5 Bits)
         if (inputBitIndex >= (currentLevel + 4)) {
             currentState = STATE_LEVEL_SUCCESS;
         } else {
-        	led_inputBlink();
+        	// Level noch nicht abgeschlossen: Interrupts für die nächste Eingabe wieder freigeben
+        	NVIC_EnableIRQ(EXTI0_IRQn);
+			NVIC_EnableIRQ(EXTI2_IRQn);
         }
     } else {
-        // Bit war falsch -> Sofortiger Wechsel zu Game Over
+    	// Fehlerhafte Eingabe führt zum sofortigen Spielende
         currentState = STATE_GAME_OVER;
     }
 }
 
-
+/* --- HAUPTPROGRAMM --- */
 int main(void) {
-    // System-Grundkonfiguration beim Starten des Controllers
+	// Grundinitialisierung der Hardware-Ressourcen
     System_Init();
     initHardwareDelay();
     initRandomNumber();
     initLEDs();
     initButtons();
 
-    /* * Hier werden später die Module initialisiert, z.B.:
-     * initRandomNumber();
-     * initLEDs();
-     * initButtons();
-     */
-
-    /* --- HAUPTSCHLEIFE (ZUSTANDSMASCHINE) --- */
+    /* --- ZUSTANDSMASCHINE --- */
     while (1) {
         switch (currentState) {
 
             case STATE_INIT:
-                // 1. Level auf 1 setzen
                 currentLevel = 1;
-
-                // 2. Zufalls-Seed über ADC holen
                 randomSeed = generateRandomNumber();
-                // 3. Erste Sequenz erzeugen
-
-                // Wenn das Setup fertig ist, gehen wir direkt in die Ausgabe
                 currentState = STATE_PLAY_SEQUENCE;
                 break;
 
             case STATE_PLAY_SEQUENCE:
-                // 1. EXTI (Taster-Interrupts) deaktivieren, damit der Spieler
-                // während der Ausgabe nicht dazwischenfunken kann.
+            	// Hardware-Taster deaktivieren, um Eingaben während der Ausgabe zu verhindern
+            	NVIC_DisableIRQ(EXTI0_IRQn);
+				NVIC_DisableIRQ(EXTI2_IRQn);
 
-                // 2. Die generierte Bitmaske/Sequenz über den Timer abarbeiten
-                // 3. LEDs entsprechend ein- und ausschalten
             	led_playSequence(randomSeed, currentLevel);
 
-            	// 5. ANPASSUNG: Den Eingabe-Zähler für das neue Level auf 0 zurücksetzen
+            	// Zähler für die bevorstehende Spielereingabe zurücksetzen
 				inputBitIndex = 0;
 
-                // Sobald die Sequenz komplett ausgegeben wurde:
                 currentState = STATE_WAIT_FOR_INPUT;
                 break;
 
             case STATE_WAIT_FOR_INPUT:
-            	/* In diesem Zustand macht die Hauptschleife absolut gar nichts.
-				 * Der Controller wartet passiv. Die Zustandsänderung passiert
-				 * ausschließlich im Hintergrund über die processPlayerInput-Funktion.
-				 */
+            	// Hardware-Flags löschen, um sofortiges Auslösen durch aufgestaute Interrupts zu vermeiden
+				//EXTI->PR1 = (1 << 0) | (1 << 2);
+				//NVIC_ClearPendingIRQ(EXTI0_IRQn);
+				//NVIC_ClearPendingIRQ(EXTI2_IRQn);
+
+				// Eingabebereitschaft wiederherstellen
+            	NVIC_EnableIRQ(EXTI0_IRQn);
+				NVIC_EnableIRQ(EXTI2_IRQn);
                 break;
 
             case STATE_LEVEL_SUCCESS:
-                // 1. LED 2x lang blinken lassen (Erfolgs-Feedback)
+            	NVIC_DisableIRQ(EXTI0_IRQn);
+				NVIC_DisableIRQ(EXTI2_IRQn);
+
             	led_blinkSuccess();
-                // 2. Level erhöhen (Maximal bis Level 5)
+
                 if (currentLevel < 5) {
                     currentLevel++;
-                } else {
-                	currentState = STATE_INIT;
                 }
 
-                // 3. Kurze Pause (z.B. 3 Sekunden warten)
                 timerDelayMs(3000);
-
-                // Nächstes Level startet mit der neuen Sequenz
                 currentState = STATE_PLAY_SEQUENCE;
                 break;
 
             case STATE_GAME_OVER:
-                // 1. LED 3x schnell blinken lassen (Fehler-Feedback)
             	led_blinkGameOver();
-                // 2. Level zurücksetzen
                 currentLevel = 1;
 
-                // 3. Warten (z.B. 3 Sekunden) oder auf Reset-Taste reagieren
                 timerDelayMs(1000);
-
-                // Zurück zum Startzustand
                 currentState = STATE_INIT;
                 break;
 
             default:
-                // Sicherheitsnetz, falls mal ein undefinierter Zustand erreicht wird
+            	// Sicherheitsrückfall bei undefiniertem Zustand
                 currentState = STATE_INIT;
                 break;
         }
