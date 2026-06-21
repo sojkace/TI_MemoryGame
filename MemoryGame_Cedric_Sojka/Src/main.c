@@ -100,9 +100,9 @@ int main(void) {
 
             case STATE_WAIT_FOR_INPUT:
             	// Hardware-Flags löschen, um sofortiges Auslösen durch aufgestaute Interrupts zu vermeiden
-				//EXTI->PR1 = (1 << 0) | (1 << 2);
-				//NVIC_ClearPendingIRQ(EXTI0_IRQn);
-				//NVIC_ClearPendingIRQ(EXTI2_IRQn);
+				EXTI->PR1 = (1 << 0) | (1 << 2);
+				NVIC_ClearPendingIRQ(EXTI0_IRQn);
+				NVIC_ClearPendingIRQ(EXTI2_IRQn);
 
 				// Eingabebereitschaft wiederherstellen
             	NVIC_EnableIRQ(EXTI0_IRQn);

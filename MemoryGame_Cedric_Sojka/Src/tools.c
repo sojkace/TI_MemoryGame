@@ -20,7 +20,7 @@ void initHardwareDelay(void) {
     // 4. Update-Generation (UG) erzwingen.
     // Dies stellt sicher, dass der Timer den neuen Prescaler-Wert sofort übernimmt
     // und nicht erst nach einem eventuellen Überlauf des alten Wertes.
-    // TIM2->EGR |= (1 << 0);
+    TIM2->EGR |= (1 << 0);
 
     // 5. Timer 2 endgültig starten (CEN-Bit setzen)
     TIM2->CR1 |= (1 << 0);
