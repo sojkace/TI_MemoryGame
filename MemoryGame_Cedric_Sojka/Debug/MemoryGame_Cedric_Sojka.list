@@ -300,13 +300,13 @@ __STATIC_INLINE void __NVIC_EnableIRQ(IRQn_Type IRQn)
 08000364 <initButtons>:
 volatile uint32_t lastTouchTime_PA2 = 0;
 
-// Wird in der main.c definiert
+// Externe Funktion zur Verarbeitung der Spielereingabe
 extern void processPlayerInput(uint8_t bitEntered);
 
 void initButtons(void) {
  8000364:	b580      	push	{r7, lr}
  8000366:	af00      	add	r7, sp, #0
-    // 1. Enable clocks for GPIOA
+	// Takt für GPIOA aktivieren
     RCC->AHB2ENR |= 1 << 0;
  8000368:	4b2b      	ldr	r3, [pc, #172]	@ (8000418 <initButtons+0xb4>)
  800036a:	6cdb      	ldr	r3, [r3, #76]	@ 0x4c
@@ -314,7 +314,7 @@ void initButtons(void) {
  800036e:	f043 0301 	orr.w	r3, r3, #1
  8000372:	64d3      	str	r3, [r2, #76]	@ 0x4c
 
-    // 2. PA0 und PA2 als Input konfigurieren
+    // PA0 und PA2 als Eingang konfigurieren
     GPIOA->MODER &= ~(3 << 0);
  8000374:	f04f 4390 	mov.w	r3, #1207959552	@ 0x48000000
  8000378:	681b      	ldr	r3, [r3, #0]
@@ -328,7 +328,7 @@ void initButtons(void) {
  800038e:	f023 0330 	bic.w	r3, r3, #48	@ 0x30
  8000392:	6013      	str	r3, [r2, #0]
 
-    // 3. Enable SYSCFG clock
+    // Takt für SYSCFG aktivieren
     RCC->APB2ENR |= 1 << 0;
  8000394:	4b20      	ldr	r3, [pc, #128]	@ (8000418 <initButtons+0xb4>)
  8000396:	6e1b      	ldr	r3, [r3, #96]	@ 0x60
@@ -336,8 +336,7 @@ void initButtons(void) {
  800039a:	f043 0301 	orr.w	r3, r3, #1
  800039e:	6613      	str	r3, [r2, #96]	@ 0x60
 
-    // 4. Disable PA0 und PA2 pull-up/pull-down (Wie in den Folien)
-    // Achtung: Maske ist 3 (zwei Bits pro Pin)!
+    // Pull-Up/Pull-Down-Widerstände für PA0 und PA2 deaktivieren
     GPIOA->PUPDR &= ~(3 << 0);
  80003a0:	f04f 4390 	mov.w	r3, #1207959552	@ 0x48000000
  80003a4:	68db      	ldr	r3, [r3, #12]
@@ -351,7 +350,7 @@ void initButtons(void) {
  80003ba:	f023 0330 	bic.w	r3, r3, #48	@ 0x30
  80003be:	60d3      	str	r3, [r2, #12]
 
-    // 5. Select Port A as interrupt source (KORREKTUR: Beide liegen in EXTICR[0])
+    // Port A (PA0 und PA2) als Interrupt-Quelle konfigurieren
     SYSCFG->EXTICR[0] &= ~(0xF << 0); // PA0 auf EXTI0 mappen
  80003c0:	4b16      	ldr	r3, [pc, #88]	@ (800041c <initButtons+0xb8>)
  80003c2:	689b      	ldr	r3, [r3, #8]
@@ -365,7 +364,7 @@ void initButtons(void) {
  80003d2:	f423 6370 	bic.w	r3, r3, #3840	@ 0xf00
  80003d6:	6093      	str	r3, [r2, #8]
 
-    // 6. Enable EXTI lines
+    // EXTI-Leitungen für Line 0 und 2 aktivieren
     EXTI->IMR1 |= 1 << 0;
  80003d8:	4b11      	ldr	r3, [pc, #68]	@ (8000420 <initButtons+0xbc>)
  80003da:	681b      	ldr	r3, [r3, #0]
@@ -379,7 +378,7 @@ void initButtons(void) {
  80003ea:	f043 0304 	orr.w	r3, r3, #4
  80003ee:	6013      	str	r3, [r2, #0]
 
-    // 7. Enable rising edge for trigger
+    // Trigger auf steigende Flanke setzen
     EXTI->RTSR1 |= 1 << 0;
  80003f0:	4b0b      	ldr	r3, [pc, #44]	@ (8000420 <initButtons+0xbc>)
  80003f2:	689b      	ldr	r3, [r3, #8]
@@ -393,7 +392,7 @@ void initButtons(void) {
  8000402:	f043 0304 	orr.w	r3, r3, #4
  8000406:	6093      	str	r3, [r2, #8]
 
-    // 8. Interrupts im NVIC freischalten
+    // Interrupts im NVIC aktivieren
     NVIC_EnableIRQ(EXTI0_IRQn);
  8000408:	2006      	movs	r0, #6
  800040a:	f7ff ff8d 	bl	8000328 <__NVIC_EnableIRQ>
@@ -409,24 +408,24 @@ void initButtons(void) {
 
 08000424 <EXTI0_IRQHandler>:
 
-// PA0: long (1)
+// Interrupt-Handler für PA0 (Eingabe: 1)
 void EXTI0_IRQHandler(void) {
  8000424:	b580      	push	{r7, lr}
  8000426:	af00      	add	r7, sp, #0
-    // Prüfen, ob der Interrupt wirklich von EXTI0 kommt
+    // Interrupt-Flag für EXTI0 prüfen
     if (EXTI->PR1 & (1 << 0)) {
  8000428:	4b11      	ldr	r3, [pc, #68]	@ (8000470 <EXTI0_IRQHandler+0x4c>)
  800042a:	695b      	ldr	r3, [r3, #20]
  800042c:	f003 0301 	and.w	r3, r3, #1
  8000430:	2b00      	cmp	r3, #0
  8000432:	d01b      	beq.n	800046c <EXTI0_IRQHandler+0x48>
-        // Clear interrupt flag (STM32 erfordert Zuweisung, nicht |=)
+    	// Interrupt-Flag löschen
         EXTI->PR1 = (1 << 0);
  8000434:	4b0e      	ldr	r3, [pc, #56]	@ (8000470 <EXTI0_IRQHandler+0x4c>)
  8000436:	2201      	movs	r2, #1
  8000438:	615a      	str	r2, [r3, #20]
 
-        // Debouncing: Prüfen ob seit dem letzten Druck 50ms vergangen sind
+        // Software-Entprellung
         if ((TIM2->CNT - lastTouchTime_PA0) > 800) {
  800043a:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
  800043e:	6a5a      	ldr	r2, [r3, #36]	@ 0x24
@@ -435,26 +434,25 @@ void EXTI0_IRQHandler(void) {
  8000444:	1ad3      	subs	r3, r2, r3
  8000446:	f5b3 7f48 	cmp.w	r3, #800	@ 0x320
  800044a:	d90f      	bls.n	800046c <EXTI0_IRQHandler+0x48>
-            lastTouchTime_PA0 = TIM2->CNT; // Zeitstempel merken
+            lastTouchTime_PA0 = TIM2->CNT;
  800044c:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
  8000450:	6a5b      	ldr	r3, [r3, #36]	@ 0x24
  8000452:	4a08      	ldr	r2, [pc, #32]	@ (8000474 <EXTI0_IRQHandler+0x50>)
  8000454:	6013      	str	r3, [r2, #0]
 
-            // Wenn wir im richtigen Spielmodus sind, Eingabe "1" senden
+            // Eingabe verarbeiten
             processPlayerInput(1);
  8000456:	2001      	movs	r0, #1
  8000458:	f000 f976 	bl	8000748 <processPlayerInput>
 
-            // Zeitstempel aktualisieren, NACHDEM die Logik verarbeitet wurde
+            // Zeitstempel nach der Verarbeitung aktualisieren
             lastTouchTime_PA0 = TIM2->CNT;
  800045c:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
  8000460:	6a5b      	ldr	r3, [r3, #36]	@ 0x24
  8000462:	4a04      	ldr	r2, [pc, #16]	@ (8000474 <EXTI0_IRQHandler+0x50>)
  8000464:	6013      	str	r3, [r2, #0]
 
-            // Eventuelle Stör-Flanken, die während der Verarbeitung (LED-Feedback)
-            // registriert wurden, als Hardware-Post-it restlos löschen.
+            // Etwaige während der Verarbeitung gesetzte Interrupt-Flags löschen
             EXTI->PR1 = (1 << 0);
  8000466:	4b02      	ldr	r3, [pc, #8]	@ (8000470 <EXTI0_IRQHandler+0x4c>)
  8000468:	2201      	movs	r2, #1
@@ -469,24 +467,24 @@ void EXTI0_IRQHandler(void) {
 
 08000478 <EXTI2_IRQHandler>:
 
-// PA2: short (0)
+// Interrupt-Handler für PA2 (Eingabe: 0)
 void EXTI2_IRQHandler(void) {
  8000478:	b580      	push	{r7, lr}
  800047a:	af00      	add	r7, sp, #0
-    // Prüfen, ob der Interrupt wirklich von EXTI2 kommt
+	// Interrupt-Flag für EXTI2 prüfen
     if (EXTI->PR1 & (1 << 2)) {
  800047c:	4b11      	ldr	r3, [pc, #68]	@ (80004c4 <EXTI2_IRQHandler+0x4c>)
  800047e:	695b      	ldr	r3, [r3, #20]
  8000480:	f003 0304 	and.w	r3, r3, #4
  8000484:	2b00      	cmp	r3, #0
  8000486:	d01b      	beq.n	80004c0 <EXTI2_IRQHandler+0x48>
-        // Clear interrupt flag
+    	// Interrupt-Flag löschen
         EXTI->PR1 = (1 << 2);
  8000488:	4b0e      	ldr	r3, [pc, #56]	@ (80004c4 <EXTI2_IRQHandler+0x4c>)
  800048a:	2204      	movs	r2, #4
  800048c:	615a      	str	r2, [r3, #20]
 
-        // Debouncing: 50ms
+        // Software-Entprellung
         if ((TIM2->CNT - lastTouchTime_PA2) > 800) {
  800048e:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
  8000492:	6a5a      	ldr	r2, [r3, #36]	@ 0x24
@@ -501,17 +499,19 @@ void EXTI2_IRQHandler(void) {
  80004a6:	4a08      	ldr	r2, [pc, #32]	@ (80004c8 <EXTI2_IRQHandler+0x50>)
  80004a8:	6013      	str	r3, [r2, #0]
 
-            // Wenn wir im richtigen Spielmodus sind, Eingabe "0" senden
+            // Eingabe verarbeiten
             processPlayerInput(0);
  80004aa:	2000      	movs	r0, #0
  80004ac:	f000 f94c 	bl	8000748 <processPlayerInput>
 
-            // Störungsfreie Reaktivierung des nächsten Eingabefensters
+            // Zeitstempel nach der Verarbeitung aktualisieren
 			lastTouchTime_PA2 = TIM2->CNT;
  80004b0:	f04f 4380 	mov.w	r3, #1073741824	@ 0x40000000
  80004b4:	6a5b      	ldr	r3, [r3, #36]	@ 0x24
  80004b6:	4a04      	ldr	r2, [pc, #16]	@ (80004c8 <EXTI2_IRQHandler+0x50>)
  80004b8:	6013      	str	r3, [r2, #0]
+
+			// Etwaige während der Verarbeitung gesetzte Interrupt-Flags löschen
 			EXTI->PR1 = (1 << 2);
  80004ba:	4b02      	ldr	r3, [pc, #8]	@ (80004c4 <EXTI2_IRQHandler+0x4c>)
  80004bc:	2204      	movs	r2, #4
